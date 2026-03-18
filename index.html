@@ -56,10 +56,19 @@ canvas { display: block; }
 #waveCard .wc-next { font-size: 22px; color: #fff; margin-top: 10px; text-shadow: 1px 1px 4px #000; }
 #waveCard .wc-stats { font-size: 16px; color: #aaa; margin-top: 8px; }
 #touchControls { position: absolute; bottom: 60px; left: 0; width: 100%; display: none; pointer-events: none; }
-#joystickArea { position: absolute; bottom: 5px; left: 20px; width: 110px; height: 110px; border-radius: 50%; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.25); pointer-events: all; touch-action: none; }
-#joystickThumb { position: absolute; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.45); border: 2px solid rgba(255,255,255,0.8); top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
-#attackBtn { position: absolute; bottom: 10px; right: 30px; width: 76px; height: 76px; border-radius: 50%; background: rgba(200,50,50,0.5); border: 3px solid rgba(255,100,100,0.9); color: #fff; font-size: 13px; font-weight: bold; display: flex; align-items: center; justify-content: center; pointer-events: all; cursor: pointer; touch-action: none; user-select: none; text-shadow: 1px 1px 2px #000; }
+#joystickArea { position: absolute; bottom: 10px; left: 20px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); pointer-events: all; touch-action: none; }
+#joystickThumb { position: absolute; width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.5); border: 2px solid rgba(255,255,255,0.85); top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+#attackBtn { position: absolute; bottom: 15px; right: 25px; width: 80px; height: 80px; border-radius: 50%; background: rgba(200,50,50,0.6); border: 3px solid rgba(255,100,100,0.9); color: #fff; font-size: 22px; font-weight: bold; display: flex; align-items: center; justify-content: center; pointer-events: all; cursor: pointer; touch-action: none; user-select: none; opacity: 0.6; }
+#attackBtn:active { opacity: 0.9; background: rgba(255,80,80,0.8); }
+#shopMobileBtnTouch { position: absolute; bottom: 15px; right: 115px; width: 50px; height: 50px; border-radius: 50%; background: rgba(180,130,50,0.6); border: 2px solid #ffd700; color: #ffd700; font-size: 20px; display: flex; align-items: center; justify-content: center; pointer-events: all; cursor: pointer; touch-action: none; opacity: 0.6; }
+#shopMobileBtnTouch:active { opacity: 0.9; }
+#regroupBtnTouch { position: absolute; bottom: 15px; right: 175px; width: 50px; height: 50px; border-radius: 50%; background: rgba(50,150,50,0.6); border: 2px solid #6f5; color: #6f5; font-size: 16px; display: flex; align-items: center; justify-content: center; pointer-events: all; cursor: pointer; touch-action: none; opacity: 0.6; }
+#regroupBtnTouch:active { opacity: 0.9; }
 #shopMobileBtn { position: absolute; top: 10px; right: 10px; background: linear-gradient(180deg,#c96,#865); color: #fff; border: 2px solid #ffd700; padding: 5px 10px; border-radius: 6px; font-size: 12px; pointer-events: all; cursor: pointer; display: none; }
+#waveCard .wc-progress-wrap { width: 60%; background: #333; border-radius: 8px; height: 12px; margin-top: 14px; overflow: hidden; border: 1px solid #555; }
+#waveCard .wc-progress-bar { height: 100%; background: linear-gradient(90deg,#c96,#ffd700); border-radius: 8px; transition: width 0.5s; }
+#waveCard .wc-wave-label { font-size: 13px; color: #888; margin-top: 4px; }
+#waveCard .wc-desc { font-size: 15px; color: #ffcc66; margin-top: 6px; font-style: italic; }
 </style>
 </head>
 <body>
@@ -98,15 +107,27 @@ canvas { display: block; }
       <div class="wc-title" id="wcTitle"></div>
       <div class="wc-next" id="wcNext"></div>
       <div class="wc-stats" id="wcStats"></div>
+      <div class="wc-desc" id="wcDesc"></div>
+      <div class="wc-progress-wrap"><div class="wc-progress-bar" id="wcProgress"></div></div>
+      <div class="wc-wave-label" id="wcProgressLabel"></div>
     </div>
+    <div id="pauseOverlay" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:150;flex-direction:column;align-items:center;justify-content:center;color:#fff;">
+      <div style="font-size:52px;font-weight:bold;color:#ffd700;text-shadow:0 0 20px #f80,2px 2px 6px #000;margin-bottom:20px;">PAUSED</div>
+      <button onclick="resumeGame()" style="background:linear-gradient(180deg,#5c4,#384);color:#fff;border:2px solid #6f5;padding:10px 28px;border-radius:8px;font-size:16px;cursor:pointer;font-family:Georgia,serif;margin:5px;">&#9654; Resume</button>
+      <button onclick="openShop()" style="background:linear-gradient(180deg,#c96,#865);color:#fff;border:2px solid #ffd700;padding:10px 28px;border-radius:8px;font-size:16px;cursor:pointer;font-family:Georgia,serif;margin:5px;">&#9876; Open Shop</button>
+      <button onclick="quitToMenu()" style="background:linear-gradient(180deg,#644,#422);color:#fff;border:2px solid #966;padding:10px 28px;border-radius:8px;font-size:16px;cursor:pointer;font-family:Georgia,serif;margin:5px;">&#8592; Quit to Menu</button>
+    </div>
+    <div id="shieldIcon" style="display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,80,200,0.8);border:2px solid #66aaff;border-radius:50%;width:30px;height:30px;align-items:center;justify-content:center;font-size:16px;color:#adf;pointer-events:none;">🛡</div>
+    <div id="soldierPortraits" style="position:absolute;bottom:52px;left:10px;display:flex;gap:4px;pointer-events:none;"></div>
   </div>
   <div id="overlay">
     <h1>&#9876; KNIGHT ORC ASSAULT</h1>
     <div class="subtitle">Defend the village across 50 waves of orcs!</div>
+    <div id="menuHighScore" style="color:#ffd700;font-size:13px;margin-bottom:8px;">Loading...</div>
     <div class="controls-hint">
       WASD / Arrow Keys: Move &nbsp;|&nbsp; Click / Space: Attack<br>
-      E key or SHOP button: Open shop &nbsp;|&nbsp; Kill orcs to earn gold<br>
-      Player faces movement direction &mdash; use joystick on mobile
+      E: Shop &nbsp;|&nbsp; B: Area Bomb &nbsp;|&nbsp; P/Esc: Pause<br>
+      Kill orcs to earn gold — use SHOP between waves
     </div>
     <button onclick="startGame()">&#9658; START GAME</button>
   </div>
@@ -119,7 +140,9 @@ canvas { display: block; }
   </div>
   <div id="touchControls">
     <div id="joystickArea"><div id="joystickThumb"></div></div>
-    <div id="attackBtn">ATK</div>
+    <div id="attackBtn">⚔</div>
+    <div id="shopMobileBtnTouch" ontouchstart="event.preventDefault();openShop()">🛒</div>
+    <div id="regroupBtnTouch" ontouchstart="event.preventDefault();regroupSoldiers()">⚑</div>
     <button id="shopMobileBtn" onclick="openShop()">SHOP</button>
   </div>
 </div>
@@ -141,9 +164,8 @@ function scaleCanvas() {
   const gc = document.getElementById('gameContainer');
   gc.style.transform = 'scale(' + s + ')';
   gc.style.transformOrigin = 'top center';
-  if (window.innerWidth < 700) {
+  if (window.innerWidth < 768) {
     document.getElementById('touchControls').style.display = 'block';
-    document.getElementById('shopMobileBtn').style.display = 'block';
   }
 }
 scaleCanvas();
@@ -210,6 +232,29 @@ function playSound(type, volMult) {
       osc.type='sine'; osc.frequency.setValueAtTime(60,t);
       g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.3*v,t+0.1); g.gain.exponentialRampToValueAtTime(0.001,t+0.4);
       osc.connect(g); g.connect(ac.destination); osc.start(t); osc.stop(t+0.4);
+    } else if (type === 'bomb') {
+      const o1=ac.createOscillator(),g1=ac.createGain();
+      o1.type='sawtooth'; o1.frequency.setValueAtTime(180,t); o1.frequency.exponentialRampToValueAtTime(40,t+0.4);
+      g1.gain.setValueAtTime(0.4*v,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.4);
+      o1.connect(g1); g1.connect(ac.destination); o1.start(t); o1.stop(t+0.4);
+      const bs=Math.ceil(ac.sampleRate*0.25),buf=ac.createBuffer(1,bs,ac.sampleRate);
+      const bd=buf.getChannelData(0); for(let i=0;i<bs;i++) bd[i]=(Math.random()*2-1)*0.5;
+      const ns=ac.createBufferSource(),ng=ac.createGain();
+      ns.buffer=buf; ng.gain.setValueAtTime(0.3*v,t); ng.gain.exponentialRampToValueAtTime(0.001,t+0.25);
+      ns.connect(ng); ng.connect(ac.destination); ns.start(t); ns.stop(t+0.25);
+    } else if (type === 'battlecry') {
+      [440,550,660].forEach((freq,i)=>{
+        const o=ac.createOscillator(),g=ac.createGain();
+        o.type='square'; o.frequency.setValueAtTime(freq,t+i*0.08);
+        g.gain.setValueAtTime(0.15*v,t+i*0.08); g.gain.exponentialRampToValueAtTime(0.001,t+i*0.08+0.25);
+        o.connect(g); g.connect(ac.destination); o.start(t+i*0.08); o.stop(t+i*0.08+0.25);
+      });
+    } else if (type === 'orcLand') {
+      const bs=Math.ceil(ac.sampleRate*0.1),buf=ac.createBuffer(1,bs,ac.sampleRate);
+      const bd=buf.getChannelData(0); for(let i=0;i<bs;i++) bd[i]=(Math.random()*2-1)*(1-i/bs);
+      const ns=ac.createBufferSource(),ng=ac.createGain();
+      ns.buffer=buf; ng.gain.setValueAtTime(0.18*v,t); ng.gain.exponentialRampToValueAtTime(0.001,t+0.1);
+      ns.connect(ng); ng.connect(ac.destination); ns.start(t); ns.stop(t+0.1);
     }
   } catch(e) {}
 }
@@ -263,6 +308,8 @@ window.addEventListener('keydown', function(e) {
   keys[e.code] = true;
   if (e.code === 'Space') { e.preventDefault(); tryAttack(); }
   if (e.code === 'KeyE') { e.preventDefault(); openShop(); }
+  if (e.code === 'KeyB') { e.preventDefault(); useAreaBomb(); }
+  if (e.code === 'KeyP' || e.code === 'Escape') { e.preventDefault(); togglePause(); }
 });
 window.addEventListener('keyup', function(e) { keys[e.code] = false; });
 
@@ -271,6 +318,13 @@ canvas.addEventListener('mousedown', function(e) {
   if (e.button === 0) tryAttack();
 });
 canvas.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+canvas.addEventListener('touchstart', function(e) {
+  getAudioCtx();
+  const r = canvas.getBoundingClientRect();
+  const t = e.changedTouches[0];
+  const tx = (t.clientX - r.left) / (r.width / VW);
+  if (tx > VW / 2) { e.preventDefault(); tryAttack(); }
+}, { passive: false });
 
 // Touch joystick
 const joystickArea = document.getElementById('joystickArea');
@@ -317,17 +371,22 @@ function initGameState() {
     player: null,
     soldiers: [], orcs: [], projectiles: [],
     coins: [], particles: [], dmgNums: [],
-    shopOpen: false,
+    shopOpen: false, paused: false,
     attackSpeedLevel: 0,
     killStreak: 0, comboTimer: 0,
     comboTexts: [], sparkles: [], killFeed: [],
     dtMult: 1.0, deathSlowTimer: 0,
     hordeWave: false,
+    shieldRune: 0, bombCount: 0, soldierUpgrades: 0,
+    stunTimer: 0,
+    screenFlash: 0,
+    waveStartTime: 0,
+    soldierHireCount: 0,
   };
   gs.player = {
     x: WW/2, y: WH/2,
-    hp: 100, maxHp: 100,
-    damage: 25, speed: 160,
+    hp: 120, maxHp: 120,
+    damage: 22, speed: 160,
     xp: 0, xpNext: 100,
     level: 1,
     angle: 0,
@@ -446,7 +505,7 @@ function drawPlayer(p) {
 function drawOrc(o) {
   if (!isOnScreen(o.x, o.y, 40)) return;
   const x = wx(o.x), y = wy(o.y);
-  const sc = o.boss ? 2.2 : (o.type === 'goblin' ? 0.75 : 1);
+  const sc = (o.boss ? 2.2 : (o.type === 'goblin' ? 0.75 : 1)) * (o.dropScale || 1.0);
   const flash = o.hitFlash > 0;
   const rage = o.boss && o.hp < o.maxHp * 0.5;
 
@@ -588,6 +647,19 @@ function drawOrc(o) {
     ctx.textAlign = 'center';
     ctx.fillText('BOSS', wx(o.x), by - 2);
   }
+  // Stun stars
+  if (o.stunTimer > 0) {
+    const t = performance.now() / 300;
+    for (let i = 0; i < 3; i++) {
+      const a = t + (i / 3) * Math.PI * 2;
+      const sx = wx(o.x) + Math.cos(a) * 14;
+      const sy = wy(o.y) - (o.boss ? 50 : 22) - Math.abs(Math.sin(t*2+i))*4;
+      ctx.font = '12px serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffee00';
+      ctx.fillText('★', sx, sy);
+    }
+  }
 }
 
 // ─── Drawing: Allied Soldier ───────────────────────────────────────────────
@@ -639,6 +711,17 @@ function drawSoldier(s) {
   ctx.beginPath(); ctx.moveTo(8,-24); ctx.lineTo(9.5,-34); ctx.lineTo(11,-24); ctx.closePath(); ctx.fill();
 
   ctx.restore();
+
+  // Name above soldier
+  if (s.name) {
+    const cheerOff = s.cheerTimer > 0 ? Math.sin(s.cheerTimer * 20) * 4 : 0;
+    ctx.globalAlpha = 0.85;
+    ctx.font = '9px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#aaddff';
+    ctx.fillText(s.name, x, y - 30 + cheerOff);
+    ctx.globalAlpha = 1;
+  }
 }
 
 // ─── Drawing: Projectile ──────────────────────────────────────────────────
@@ -955,6 +1038,7 @@ function drawWalls() {
 
 // ─── Particles & Damage Numbers ───────────────────────────────────────────
 function spawnParticles(x, y, color, count) {
+  if (gs.particles.length > 150) return;
   for (let i = 0; i < count; i++) {
     const a = Math.random() * Math.PI * 2;
     const spd = 60 + Math.random() * 100;
@@ -969,15 +1053,76 @@ function spawnParticles(x, y, color, count) {
   }
 }
 
+function spawnBloodHit(x, y) {
+  const count = 3 + Math.floor(Math.random() * 2);
+  for (let i = 0; i < count; i++) {
+    const a = -Math.PI/2 + (Math.random()-0.5) * Math.PI;
+    const spd = 80 + Math.random() * 120;
+    gs.particles.push({
+      x, y,
+      vx: Math.cos(a) * spd * (0.5 + Math.random()),
+      vy: Math.sin(a) * spd - 40,
+      r: 2 + Math.random() * 2,
+      color: Math.random() < 0.5 ? '#cc1111' : '#991111',
+      life: 0.6, maxLife: 0.6,
+      gravity: 200,
+    });
+  }
+}
+
+function spawnBloodDeath(x, y) {
+  const count = 8 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const spd = 80 + Math.random() * 180;
+    gs.particles.push({
+      x, y,
+      vx: Math.cos(a) * spd, vy: Math.sin(a) * spd - 60,
+      r: 3 + Math.random() * 3,
+      color: Math.random() < 0.6 ? '#cc1111' : '#881111',
+      life: 0.7, maxLife: 0.7,
+      gravity: 200,
+    });
+  }
+  // shockwave ring
+  gs.particles.push({
+    x, y, vx: 0, vy: 0, r: 4, maxR: 36,
+    color: 'ring', life: 0.35, maxLife: 0.35, gravity: 0,
+  });
+}
+
+function spawnDustCloud(x, y) {
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + (Math.random()-0.5)*0.5;
+    const spd = 40 + Math.random() * 60;
+    gs.particles.push({
+      x, y,
+      vx: Math.cos(a)*spd, vy: Math.sin(a)*spd,
+      r: 4 + Math.random()*3,
+      color: '#aaa899',
+      life: 0.4, maxLife: 0.4, gravity: -20,
+    });
+  }
+}
+
 function spawnDmgNum(x, y, val, color) {
   gs.dmgNums.push({ x, y, val, color: color||'#ff4', vy: -60, life: 1.0 });
 }
 
 function updateParticles(dt) {
+  // cap oldest particles if over limit
+  while (gs.particles.length > 150) gs.particles.shift();
   for (let i = gs.particles.length - 1; i >= 0; i--) {
     const p = gs.particles[i];
+    if (p.color === 'ring') {
+      p.r += (p.maxR - 4) * dt / p.maxLife * 1.5;
+      p.life -= dt;
+      if (p.life <= 0) gs.particles.splice(i, 1);
+      continue;
+    }
     p.x += p.vx * dt; p.y += p.vy * dt;
-    p.vy += 120 * dt;
+    const grav = p.gravity !== undefined ? p.gravity : 120;
+    p.vy += grav * dt;
     p.life -= dt;
     if (p.life <= 0) gs.particles.splice(i, 1);
   }
@@ -991,10 +1136,18 @@ function updateParticles(dt) {
 
 function drawParticles() {
   for (const p of gs.particles) {
-    if (!isOnScreen(p.x, p.y, 10)) continue;
-    ctx.globalAlpha = p.life / p.maxLife;
-    ctx.fillStyle = p.color;
-    ctx.beginPath(); ctx.arc(wx(p.x), wy(p.y), p.r, 0, Math.PI*2); ctx.fill();
+    if (!isOnScreen(p.x, p.y, 60)) continue;
+    const alpha = p.life / p.maxLife;
+    if (p.color === 'ring') {
+      ctx.globalAlpha = alpha * 0.7;
+      ctx.strokeStyle = '#cc3311';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(wx(p.x), wy(p.y), p.r, 0, Math.PI*2); ctx.stroke();
+    } else {
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(wx(p.x), wy(p.y), p.r, 0, Math.PI*2); ctx.fill();
+    }
   }
   ctx.globalAlpha = 1;
   for (const d of gs.dmgNums) {
@@ -1068,9 +1221,9 @@ function drawSparkles() {
 }
 
 // ─── Kill Feed ────────────────────────────────────────────────────────────
-function addKillFeed(text) {
-  gs.killFeed.unshift({ text, timer: 2.0, x: VW + 10 });
-  if (gs.killFeed.length > 3) gs.killFeed.pop();
+function addKillFeed(text, color) {
+  gs.killFeed.unshift({ text, timer: 2.0, x: VW + 10, color: color || null });
+  if (gs.killFeed.length > 5) gs.killFeed.pop();
 }
 function updateKillFeed(dt) {
   for (let i = gs.killFeed.length-1; i>=0; i--) {
@@ -1093,7 +1246,7 @@ function drawKillFeed() {
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
     const tw = ctx.measureText(kf.text).width;
     ctx.fillRect(kf.x - tw - 8, startY + i * 16 - 7, tw + 10, 14);
-    ctx.fillStyle = kf.text.includes('BOSS') ? '#ffd700' : '#ffaa44';
+    ctx.fillStyle = kf.color || (kf.text.includes('BOSS') ? '#ffd700' : '#ffaa44');
     ctx.fillText(kf.text, kf.x, startY + i * 16);
   }
   ctx.globalAlpha = 1;
@@ -1203,8 +1356,8 @@ function tryAttack() {
       o.kbVy = (kdy / klen) * 180;
       o.kbTimer = 0.3;
       o.kbGrace = 0.15;
-      spawnParticles(o.x, o.y, '#44cc44', 4);
-      spawnParticles(o.x, o.y, '#998877', 4); // dust
+      spawnBloodHit(o.x, o.y);
+      spawnParticles(o.x, o.y, '#998877', 3); // dust
       playSound('orcHit');
       spawnDmgNum(o.x, o.y - o.r - 10, dmg, '#ff4');
 
@@ -1236,7 +1389,8 @@ function killOrc(o) {
   waveKills++;
   gs.player.xp += xpVal;
   gs.coins.push({ x: o.x, y: o.y, r: 6, val: goldVal });
-  spawnParticles(o.x, o.y, '#44cc44', 12);
+  spawnBloodDeath(o.x, o.y);
+  spawnParticles(o.x, o.y, '#44cc44', 6);
   spawnDmgNum(o.x, o.y - 20, '+' + goldVal + 'g', '#ffd700');
   playSound('orcDeath');
   // kill feed
@@ -1297,8 +1451,9 @@ function spawnOrc(forceBoss) {
   const baseSpd = boss ? 55  : (type === 'goblin' ? 210 : (type === 'armoured' ? 90 : 130));
   const hpScale = 1 + wave * 0.12;
 
+  const spawnTargetY = y;
   const o = {
-    x, y, r: boss ? 28 : (type === 'goblin' ? 10 : 13),
+    x, y: y - 100, r: boss ? 28 : (type === 'goblin' ? 10 : 13),
     hp: Math.round(baseHp * hpScale),
     maxHp: Math.round(baseHp * hpScale),
     speed: baseSpd,
@@ -1310,6 +1465,8 @@ function spawnOrc(forceBoss) {
     rangedTimer: 2 + Math.random() * 1.5,
     wobbleAngle: 0, wobbleTimer: 0,
     zigzagTimer: 0, zigzagOffset: 0,
+    dropTimer: 0.4, dropTargetY: spawnTargetY, dropScale: 1.0,
+    stunTimer: 0,
   };
   gs.orcs.push(o);
   if (boss) {
@@ -1320,6 +1477,23 @@ function spawnOrc(forceBoss) {
 
 function updateOrcs(dt) {
   const p = gs.player;
+
+  // Drop-in animation pass
+  for (const o of gs.orcs) {
+    if (o.dropTimer > 0) {
+      o.dropTimer -= dt;
+      const t = Math.max(0, o.dropTimer / 0.4);
+      o.y = o.dropTargetY - t * t * 100;
+      o.dropScale = 1.0 + t * 0.3;
+      if (o.dropTimer <= 0) {
+        o.y = o.dropTargetY;
+        o.dropScale = 1.0;
+        spawnDustCloud(o.x, o.y + o.r);
+        playSound('orcLand', 0.5);
+      }
+    }
+    if (o.stunTimer > 0) o.stunTimer -= dt;
+  }
 
   // Separation pass
   for (let i = 0; i < gs.orcs.length; i++) {
@@ -1360,7 +1534,7 @@ function updateOrcs(dt) {
       if (sd < tDist) { target = s; tDist = sd; }
     }
 
-    if (o.kbTimer <= 0) {
+    if (o.kbTimer <= 0 && o.dropTimer <= 0 && o.stunTimer <= 0) {
       if (o.type === 'ranged') {
         // Ranged: maintain distance 180-220
         const dx = target.x - o.x, dy = target.y - o.y;
@@ -1456,17 +1630,36 @@ function updateProjectiles(dt) {
       gs.projectiles.splice(i, 1);
       continue;
     }
+    let hit = false;
     if (dist(pr, p) < pr.r + p.r) {
       damagePlayer(pr.damage);
       triggerShake(3, 0.2);
-      gs.projectiles.splice(i, 1);
+      hit = true;
     }
+    if (!hit) {
+      for (const s of gs.soldiers) {
+        if (dist(pr, s) < pr.r + s.r) {
+          s.hp -= pr.damage;
+          if (s.hp <= 0) s.dead = true;
+          spawnParticles(s.x, s.y, '#ff6644', 3);
+          hit = true; break;
+        }
+      }
+    }
+    if (hit) gs.projectiles.splice(i, 1);
   }
 }
 
 function damagePlayer(dmg) {
   const p = gs.player;
   if (p.invincible > 0) return;
+  if (gs.shieldRune > 0) {
+    gs.shieldRune--;
+    spawnParticles(p.x, p.y, '#4488ff', 12);
+    spawnDmgNum(p.x, p.y - p.r - 10, 'BLOCKED!', '#66aaff');
+    updateShieldIcon();
+    return;
+  }
   p.hp -= dmg;
   p.invincible = 0.9;
   triggerShake(6, 0.4);
@@ -1489,7 +1682,11 @@ function updateSoldiers(dt) {
   const p = gs.player;
   for (let i = gs.soldiers.length - 1; i >= 0; i--) {
     const s = gs.soldiers[i];
-    if (s.dead) { gs.soldiers.splice(i, 1); continue; }
+    if (s.dead) {
+      if (s.name) addKillFeed(s.name + ' has fallen!', '#aaaaaa');
+      gs.soldiers.splice(i, 1); continue;
+    }
+    if (s.cheerTimer > 0) s.cheerTimer -= dt;
     s.attackCooldown = Math.max(0, s.attackCooldown - dt);
 
     // Follow player loosely
@@ -1540,8 +1737,18 @@ function startWave() {
   gs.wave++;
   document.getElementById('waveVal').textContent = gs.wave;
   waveKills = 0; waveGold = 0;
+  gs.waveStartTime = Date.now();
 
-  let baseCount = 4 + gs.wave * 2 + (gs.wave > 5 ? gs.wave : 0);
+  // Auto-heal 15 HP free reward (not wave 1)
+  if (gs.wave > 1) {
+    gs.player.hp = Math.min(gs.player.maxHp, gs.player.hp + 15);
+    spawnDmgNum(gs.player.x, gs.player.y - 30, '+15 HP', '#88ff88');
+  }
+
+  // Cheer soldiers on new wave start
+  for (const s of gs.soldiers) s.cheerTimer = 1.0;
+
+  let baseCount = gs.wave === 1 ? 5 : (4 + gs.wave * 2 + (gs.wave > 5 ? gs.wave : 0));
   gs.hordeWave = (gs.wave === 25);
   if (gs.hordeWave) { baseCount *= 2; showAnnounce('HORDE WAVE!!'); }
   if (gs.wave % 5 === 0) baseCount = Math.round(baseCount * 0.7);
@@ -1573,8 +1780,10 @@ function updateWave(dt) {
   if (waveState !== 'spawning') return;
   spawnTimer -= dt;
   if (spawnTimer <= 0 && orcsSpawned < orcsThisWave) {
-    spawnOrc(false);
-    orcsSpawned++;
+    if (gs.orcs.length < 40) {
+      spawnOrc(false);
+      orcsSpawned++;
+    }
     spawnTimer = 0.15;
   }
   // Spawn boss at midpoint
@@ -1588,12 +1797,27 @@ function updateWave(dt) {
   }
 }
 
+const waveDescs = {
+  5: 'Goblins join the assault!', 6: 'Goblins join the assault!',
+  10: 'Armoured orcs march forward!', 11: 'Armoured orcs march forward!',
+  15: 'A boss leads the charge!', 16: 'Ranged orcs take aim!',
+  20: 'Elite forces incoming!', 25: 'THE HORDE ARRIVES!',
+  30: 'Reinforcements pour in!', 40: 'Two bosses at once!',
+  50: 'The final wave begins!',
+};
+
 let waveCardTimer = 0;
 function showWaveCard() {
   const card = document.getElementById('waveCard');
+  const nextWave = gs.wave + 1;
+  const waveTime = gs.waveStartTime > 0 ? Math.round((Date.now() - gs.waveStartTime) / 1000) : 0;
   document.getElementById('wcTitle').textContent = 'WAVE ' + gs.wave + ' COMPLETE!';
-  document.getElementById('wcNext').textContent = 'Next: Wave ' + (gs.wave + 1) + ' / 50';
-  document.getElementById('wcStats').textContent = 'Kills: ' + waveKills + '   Gold earned: ' + waveGold + 'g';
+  document.getElementById('wcNext').textContent = 'Next Wave: ' + nextWave + ' / 50';
+  document.getElementById('wcStats').textContent = 'Kills: ' + waveKills + '   Gold earned: +' + waveGold + 'g   Time: ' + waveTime + 's';
+  document.getElementById('wcDesc').textContent = waveDescs[nextWave] || '';
+  const pct = Math.round((gs.wave / 50) * 100);
+  document.getElementById('wcProgress').style.width = pct + '%';
+  document.getElementById('wcProgressLabel').textContent = 'Progress: ' + gs.wave + ' / 50 waves (' + pct + '%)';
   card.style.display = 'flex';
   waveCardTimer = 2.5;
   playSound('waveComplete'); spawnSparkles();
@@ -1630,7 +1854,7 @@ function updateCoins(dt) {
   const p = gs.player;
   for (let i = gs.coins.length - 1; i >= 0; i--) {
     const c = gs.coins[i];
-    if (dist(c, p) < c.r + p.r + 14) {
+    if (dist(c, p) < 110) {
       gs.gold += c.val; // already added at kill, this is for visual pop
       spawnParticles(c.x, c.y, '#ffd700', 3);
       playSound('coin');
@@ -1648,7 +1872,8 @@ function updateHUD() {
   document.getElementById('hpText').textContent = p.hp + '/' + p.maxHp;
   document.getElementById('xpFill').style.width = (100 * p.xp / p.xpNext) + '%';
   document.getElementById('levelLabel').textContent = 'Lv ' + p.level;
-  document.getElementById('goldDisplay').textContent = '\u2605 ' + gs.gold;
+  const bombStr = gs.bombCount > 0 ? ' 💣' + gs.bombCount : '';
+  document.getElementById('goldDisplay').textContent = '\u2605 ' + gs.gold + bombStr;
 }
 
 // ─── Shop ──────────────────────────────────────────────────────────────────
@@ -1662,8 +1887,9 @@ function openShop() {
     'HP: ' + p.hp + '/' + p.maxHp + '  |  DMG: ' + p.damage + '  |  SPD: ' + p.speed + '  |  ATK LVL: ' + gs.attackSpeedLevel;
 
   const soldierCost = 80 + gs.soldiers.length * 45;
+  const bombOwned = gs.bombCount || 0;
   const items = [
-    { name: 'Heal HP (+50)', cost: 30, key: 'heal',
+    { name: 'Heal HP (+60)', cost: 30, key: 'heal',
       disabled: p.hp >= p.maxHp, disabledReason: 'Full HP' },
     { name: 'Max HP +25', cost: 50, key: 'maxhp', disabled: false },
     { name: 'Damage +12', cost: 60, key: 'damage', disabled: false },
@@ -1672,15 +1898,25 @@ function openShop() {
       disabled: gs.attackSpeedLevel >= 3, disabledReason: 'Max Level' },
     { name: 'Hire Soldier (have ' + gs.soldiers.length + '/3)', cost: soldierCost, key: 'soldier',
       disabled: gs.soldiers.length >= 3, disabledReason: 'Max 3' },
+    { name: 'Area Bomb (' + bombOwned + '/2)', cost: 40, key: 'bomb',
+      disabled: bombOwned >= 2, disabledReason: 'Max 2' },
+    { name: 'Shield Rune', cost: 90, key: 'shield', disabled: false },
+    { name: 'Battle Cry', cost: 65, key: 'battlecry', disabled: false },
+    { name: 'Upgrade Soldiers (x' + (gs.soldierUpgrades+1) + ')', cost: 50, key: 'upgSoldier',
+      disabled: gs.soldiers.length === 0 || gs.soldierUpgrades >= 2, disabledReason: gs.soldiers.length === 0 ? 'No soldiers' : 'Max 2' },
   ];
 
   const descs = {
-    heal: 'Restore 50 HP instantly',
+    heal: 'Restore 60 HP instantly',
     maxhp: 'Increase maximum health permanently',
     damage: 'Your sword strikes harder',
     speed: 'Move faster across the battlefield',
     atkspd: 'Reduce swing cooldown',
     soldier: 'Ally who fights alongside you',
+    bomb: 'Explode! Deals 80 damage to all orcs on screen',
+    shield: 'Block the next hit completely',
+    battlecry: 'Stun all orcs for 2 seconds',
+    upgSoldier: 'Your soldiers gain +15 damage and +40 HP',
   };
 
   const cont = document.getElementById('shopItems');
@@ -1726,42 +1962,150 @@ function buyItem(key, cost) {
   if (gs.gold < cost) return;
   gs.gold -= cost;
   const p = gs.player;
-  if (key === 'heal') { p.hp = Math.min(p.maxHp, p.hp + 50); }
+  if (key === 'heal') { p.hp = Math.min(p.maxHp, p.hp + 60); }
   else if (key === 'maxhp') { p.maxHp += 25; p.hp += 15; }
   else if (key === 'damage') { p.damage += 12; }
   else if (key === 'speed') { p.speed += 25; }
   else if (key === 'atkspd') { gs.attackSpeedLevel = Math.min(3, gs.attackSpeedLevel + 1); }
   else if (key === 'soldier') {
     const angle = Math.random() * Math.PI * 2;
+    const names = ['Sir Aldric','Brother Wulf','Lady Mara'];
+    const soldierName = names[gs.soldierHireCount % names.length];
+    gs.soldierHireCount++;
     gs.soldiers.push({
       x: p.x + Math.cos(angle) * 50,
       y: p.y + Math.sin(angle) * 50,
       r: 12, hp: 80, maxHp: 80,
       speed: 130, damage: 15,
       attackCooldown: 0, dead: false,
+      name: soldierName, cheerTimer: 0,
     });
   }
+  else if (key === 'upgSoldier') {
+    gs.soldierUpgrades++;
+    for (const s of gs.soldiers) { s.damage += 15; s.maxHp += 40; s.hp = Math.min(s.hp+40, s.maxHp); }
+  }
+  else if (key === 'bomb') { gs.bombCount = (gs.bombCount || 0) + 1; }
+  else if (key === 'shield') { gs.shieldRune = (gs.shieldRune || 0) + 1; updateShieldIcon(); }
+  else if (key === 'battlecry') { useBattleCry(); }
   updateHUD();
   openShop(); // refresh
 }
 
+// ─── Consumable Actions ────────────────────────────────────────────────────
+function useAreaBomb() {
+  if (!gs.bombCount || gs.bombCount <= 0) return;
+  gs.bombCount--;
+  playSound('bomb');
+  gs.screenFlash = 0.35;
+  triggerShake(10, 0.5);
+  for (const o of gs.orcs) {
+    if (isOnScreen(o.x, o.y, 60)) {
+      o.hp -= 80;
+      spawnBloodHit(o.x, o.y);
+      spawnDmgNum(o.x, o.y - 20, '80', '#ff6600');
+      if (o.hp <= 0) killOrc(o);
+    }
+  }
+  for (let i = gs.orcs.length - 1; i >= 0; i--) {
+    if (gs.orcs[i].hp <= 0) gs.orcs.splice(i, 1);
+  }
+  for (let i = 0; i < 30; i++) {
+    const a = Math.random() * Math.PI * 2, spd = 100 + Math.random() * 200;
+    gs.particles.push({ x: gs.player.x, y: gs.player.y, vx: Math.cos(a)*spd, vy: Math.sin(a)*spd, r: 4+Math.random()*4, color: Math.random()<0.5?'#ff6600':'#ffaa00', life:0.6, maxLife:0.6, gravity:50 });
+  }
+  updateHUD();
+}
+
+function useBattleCry() {
+  playSound('battlecry');
+  for (const o of gs.orcs) { o.stunTimer = 2.0; }
+  spawnSparkles();
+  showAnnounce('BATTLE CRY!');
+}
+
+function updateShieldIcon() {
+  const el = document.getElementById('shieldIcon');
+  el.style.display = gs.shieldRune > 0 ? 'flex' : 'none';
+  el.textContent = gs.shieldRune > 1 ? '🛡' + gs.shieldRune : '🛡';
+}
+
 // ─── Game Flow ─────────────────────────────────────────────────────────────
+function togglePause() {
+  if (gs.state !== 'playing' && gs.state !== 'paused') return;
+  if (gs.state === 'playing') {
+    gs.state = 'paused';
+    document.getElementById('pauseOverlay').style.display = 'flex';
+  } else {
+    resumeGame();
+  }
+}
+function resumeGame() {
+  gs.state = 'playing';
+  document.getElementById('pauseOverlay').style.display = 'none';
+}
+function quitToMenu() {
+  gs.state = 'menu';
+  document.getElementById('pauseOverlay').style.display = 'none';
+  document.getElementById('shopOverlay').style.display = 'none';
+  waveState = 'idle';
+  initGameState();
+  const ov = document.getElementById('overlay');
+  const hs = loadHighScores();
+  ov.innerHTML = `
+    <h1>&#9876; KNIGHT ORC ASSAULT</h1>
+    <div class="subtitle">Defend the village across 50 waves of orcs!</div>
+    <div style="color:#ffd700;font-size:13px;margin-bottom:8px;">Best Score: ${hs.highScore} &nbsp;|&nbsp; Best Wave: ${hs.bestWave}</div>
+    <div class="controls-hint">
+      WASD / Arrow Keys: Move &nbsp;|&nbsp; Click / Space: Attack<br>
+      E: Shop &nbsp;|&nbsp; B: Area Bomb &nbsp;|&nbsp; P/Esc: Pause<br>
+      Kill orcs to earn gold — use SHOP between waves
+    </div>
+    <button onclick="startGame()">&#9658; START GAME</button>
+  `;
+  ov.style.display = 'flex';
+}
+
 function startGame() {
   initGameState();
   gs.state = 'playing';
   document.getElementById('overlay').style.display = 'none';
+  document.getElementById('pauseOverlay').style.display = 'none';
   updateHUD();
+  updateShieldIcon();
   waveState = 'idle';
   startWave();
 }
 
+function loadHighScores() {
+  try {
+    return JSON.parse(localStorage.getItem('koaScores') || '{}');
+  } catch(e) { return {}; }
+}
+function saveHighScores(hs) {
+  try { localStorage.setItem('koaScores', JSON.stringify(hs)); } catch(e) {}
+}
+function checkAndSaveHighScore() {
+  const hs = loadHighScores();
+  let newHigh = false;
+  if (!hs.highScore || gs.score > hs.highScore) { hs.highScore = gs.score; newHigh = true; }
+  if (!hs.bestWave || gs.wave > hs.bestWave) hs.bestWave = gs.wave;
+  hs.totalKills = (hs.totalKills || 0) + (waveKills || 0);
+  hs.totalGold = (hs.totalGold || 0) + (waveGold || 0);
+  saveHighScores(hs);
+  return newHigh;
+}
+
 function gameOver() {
   gs.state = 'gameover';
+  const newHigh = checkAndSaveHighScore();
+  const hs = loadHighScores();
   const ov = document.getElementById('overlay');
   ov.innerHTML = `
     <h1 style="color:#f44">GAME OVER</h1>
     <div class="subtitle">Wave ${gs.wave} | Score: ${gs.score}</div>
-    <div class="controls-hint">You fought bravely... but the orcs overwhelmed you.</div>
+    ${newHigh ? '<div style="color:#ffd700;font-size:18px;text-shadow:0 0 12px #f80">★ NEW HIGH SCORE! ★</div>' : ''}
+    <div class="controls-hint">You fought bravely... but the orcs overwhelmed you.<br>Best Score: ${hs.highScore} &nbsp;|&nbsp; Best Wave: ${hs.bestWave}</div>
     <button onclick="startGame()">&#9658; TRY AGAIN</button>
   `;
   ov.style.display = 'flex';
@@ -1769,11 +2113,13 @@ function gameOver() {
 
 function winGame() {
   gs.state = 'win';
+  checkAndSaveHighScore();
+  const hs = loadHighScores();
   const ov = document.getElementById('overlay');
   ov.innerHTML = `
     <h1 style="color:#ffd700">VICTORY!</h1>
     <div class="subtitle">You survived all 50 waves!</div>
-    <div class="controls-hint">Final Score: ${gs.score}<br>A true Knight Orc Assault champion!</div>
+    <div class="controls-hint">Final Score: ${gs.score}<br>Best Score: ${hs.highScore} &nbsp;|&nbsp; Best Wave: ${hs.bestWave}<br>A true Knight Orc Assault champion!</div>
     <button onclick="startGame()">&#9658; PLAY AGAIN</button>
   `;
   ov.style.display = 'flex';
@@ -1803,9 +2149,11 @@ function update(dt) {
     return;
   }
 
+  if (gs.state === 'paused') return;
   if (gs.state !== 'playing') return;
   const p = gs.player;
   const adt = dt * gs.dtMult;
+  if (gs.screenFlash > 0) gs.screenFlash -= dt;
 
   // Movement
   let mx = 0, my = 0;
@@ -1903,11 +2251,37 @@ function draw() {
 
   // Minimap and kill feed (outside zoom transform)
   drawMinimap(); drawKillFeed();
+
+  // Screen flash (bomb, etc.)
+  if (gs.screenFlash > 0) {
+    ctx.globalAlpha = Math.min(0.6, gs.screenFlash * 2);
+    ctx.fillStyle = '#ffaa33';
+    ctx.fillRect(0, 0, VW, VH);
+    ctx.globalAlpha = 1;
+  }
+
+  // Soldier portraits HUD
+  updateSoldierPortraits();
+}
+
+function updateSoldierPortraits() {
+  const el = document.getElementById('soldierPortraits');
+  if (!el) return;
+  el.innerHTML = '';
+  for (const s of gs.soldiers) {
+    const div = document.createElement('div');
+    div.style.cssText = 'width:22px;height:22px;background:rgba(60,100,40,0.85);border:1px solid #6f5;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#adf;';
+    div.title = s.name || 'Soldier';
+    div.textContent = (s.name||'?')[0];
+    el.appendChild(div);
+  }
 }
 
 // ─── Game Loop ─────────────────────────────────────────────────────────────
 function gameLoop(ts) {
-  const dt = Math.min((ts - lastTime) / 1000, 0.05);
+  let dt = (ts - lastTime) / 1000;
+  if (!isFinite(dt) || isNaN(dt) || dt < 0) dt = 0;
+  dt = Math.min(dt, 0.05);
   lastTime = ts;
   update(dt);
   draw();
@@ -1918,6 +2292,19 @@ requestAnimationFrame(function(ts) {
   lastTime = ts;
   requestAnimationFrame(gameLoop);
 });
+
+// Init menu high score display
+(function() {
+  const hs = loadHighScores();
+  const el = document.getElementById('menuHighScore');
+  if (el) {
+    if (hs.highScore) {
+      el.textContent = 'Best Score: ' + hs.highScore + '  |  Best Wave: ' + (hs.bestWave || 0);
+    } else {
+      el.textContent = 'No previous runs — glory awaits!';
+    }
+  }
+})();
 </script>
 </body>
 </html>
