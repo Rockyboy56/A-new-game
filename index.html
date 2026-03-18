@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Knight Orc Assault</title>
+<title>Knight Orc Assault - Ninja Kiwi Replica</title>
+<meta name="description" content="Fan-made replica of Knight Orc Assault by Ninja Kiwi. Defend the village across 50 waves of orcs!">
+<meta property="og:title" content="Knight Orc Assault - Ninja Kiwi Replica">
+<meta property="og:description" content="Defend the village across 50 waves of orcs! Fan-made replica.">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #1a1a2e; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: 'Georgia', serif; overflow: hidden; }
@@ -12,25 +15,25 @@ canvas { display: block; }
 #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
 #topLeft { position: absolute; top: 10px; left: 10px; color: #fff; text-shadow: 1px 1px 3px #000, 2px 2px 6px #000; }
 #topLeft .score { font-size: 18px; font-weight: bold; }
-#topLeft .wave { font-size: 14px; color: #ffd700; }
-#bottomBar { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.78); padding: 8px 12px; display: flex; align-items: center; gap: 10px; pointer-events: all; border-top: 2px solid rgba(255,200,50,0.3); }
-#barsSection { flex: 1; }
+#topLeft .wave { font-size: 17px; font-weight: bold; color: #ffd700; text-shadow: 1px 1px 4px #000, 0 0 10px #a60; }
+#bottomBar { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.82); padding: 8px 12px; display: flex; align-items: center; gap: 10px; pointer-events: all; border-top: 2px solid #c8a020; box-shadow: 0 -2px 8px rgba(200,160,20,0.25); }
+#barsSection { flex: 1; min-width: 0; }
 .bar-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
 .bar-label { color: #ccc; font-size: 11px; width: 28px; text-align: right; }
-.bar-bg { flex: 1; height: 14px; background: #222; border-radius: 7px; overflow: hidden; border: 1px solid #555; position: relative; }
+.bar-bg { flex: 1; height: 14px; background: #222; border-radius: 7px; overflow: hidden; border: 1px solid #555; position: relative; min-width: 80px; }
 .bar-fill { height: 100%; border-radius: 7px; transition: width 0.15s; position: relative; }
 #hpFill { background: linear-gradient(90deg, #a00, #f44, #ff6666); }
 #xpFill { background: linear-gradient(90deg, #060, #2d2, #6f6); }
 .bar-text { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; text-shadow: 1px 1px 2px #000; font-weight: bold; pointer-events: none; }
 #levelLabel { color: #ffd700; font-size: 13px; font-weight: bold; white-space: nowrap; }
-#regroupBtn { background: linear-gradient(180deg,#5c4,#384); color: #fff; border: 2px solid #6f5; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; white-space: nowrap; pointer-events: all; font-weight: bold; text-shadow: 1px 1px 2px #000; }
-#regroupBtn:hover { background: linear-gradient(180deg,#6d5,#495); }
+#regroupBtn { background: linear-gradient(180deg,#b04010,#8B3A00); color: #fff; border: 2px solid #d07030; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; white-space: nowrap; pointer-events: all; font-weight: bold; text-shadow: 1px 1px 2px #000; }
+#regroupBtn:hover { background: linear-gradient(180deg,#c05018,#9a4208); }
 #rightHud { display: flex; align-items: center; gap: 8px; }
-#goldDisplay { color: #ffd700; font-size: 15px; font-weight: bold; text-shadow: 1px 1px 3px #000; }
-#shopBtn { background: linear-gradient(180deg,#c96,#865); color: #fff; border: 2px solid #ffd700; padding: 6px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; pointer-events: all; font-weight: bold; text-shadow: 1px 1px 2px #000; }
+#goldDisplay { color: #ffd700; font-size: 15px; font-weight: bold; text-shadow: 1px 1px 3px #000; display: flex; align-items: center; gap: 4px; }
+#shopBtn { background: linear-gradient(180deg,#c96,#865); color: #fff; border: 2px solid #ffd700; padding: 6px 12px; border-radius: 6px 6px 14px 14px; font-size: 13px; cursor: pointer; pointer-events: all; font-weight: bold; text-shadow: 1px 1px 2px #000; clip-path: polygon(0 0, 100% 0, 90% 100%, 10% 100%); }
 #shopBtn:hover { background: linear-gradient(180deg,#da7,#976); }
-#waveAnnounce { position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%); color: #ffd700; font-size: 42px; font-weight: bold; text-shadow: 2px 2px 10px #000, 0 0 30px #f80; pointer-events: none; opacity: 0; text-align: center; white-space: nowrap; z-index: 50; }
-#overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.88); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; z-index: 100; }
+#waveAnnounce { position: absolute; top: -80px; left: 50%; transform: translateX(-50%); color: #ff8800; font-size: 40px; font-weight: bold; text-shadow: 2px 2px 10px #000, 0 0 30px rgba(255,120,0,0.8); pointer-events: none; text-align: center; white-space: nowrap; z-index: 50; transition: top 0.4s cubic-bezier(.22,.68,0,1.1); }
+#overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; z-index: 100; }
 #overlay h1 { font-size: 42px; margin-bottom: 10px; color: #ffd700; text-shadow: 0 0 20px #f80, 2px 2px 6px #000; }
 #overlay .subtitle { font-size: 18px; margin-bottom: 16px; color: #ccc; }
 #overlay .controls-hint { color: #aaa; font-size: 13px; margin-bottom: 24px; text-align: center; line-height: 1.8; }
@@ -83,6 +86,10 @@ canvas { display: block; }
 .buffPill.fading { opacity: 0.35; }
 #whirlwindBtnTouch { position: absolute; bottom: 105px; right: 18px; width: 56px; height: 56px; border-radius: 50%; background: rgba(40,80,200,0.6); border: 3px solid rgba(120,160,255,0.9); color: #fff; font-size: 10px; font-weight: bold; display: none; align-items: center; justify-content: center; pointer-events: all; cursor: pointer; touch-action: none; user-select: none; flex-direction: column; opacity: 0.7; }
 #whirlwindBtnTouch.locked { opacity: 0.3; }
+@keyframes hpPulse { 0%,100%{filter:none;} 50%{filter:brightness(2) saturate(2);} }
+.hp-danger #hpFill { animation: hpPulse 0.55s ease-in-out infinite; }
+@keyframes coinSpin { 0%,100%{transform:scaleX(1);} 50%{transform:scaleX(0.2);} }
+#goldCoinIcon { display:inline-block; animation: coinSpin 0.8s ease-in-out infinite; }
 </style>
 </head>
 <body>
@@ -113,7 +120,7 @@ canvas { display: block; }
         <div id="buffBar"></div>
       </div>
       <div id="rightHud">
-        <span id="goldDisplay">★ 0</span>
+        <span id="goldDisplay">0</span>
         <button id="shopBtn" onclick="openShop()">SHOP</button>
       </div>
     </div>
@@ -168,6 +175,7 @@ canvas { display: block; }
     <div id="whirlwindBtnTouch" class="locked" ontouchstart="event.preventDefault();tryWhirlwind()">&#x1F300;<br>SPIN</div>
   </div>
 </div>
+<p id="gameFooter" style="color:rgba(255,255,255,0.35);font-size:11px;text-align:center;margin-top:6px;font-family:Georgia,serif;">Fan-made replica of Knight Orc Assault by Ninja Kiwi</p>
 
 <script>
 // ─── Canvas & World Setup ──────────────────────────────────────────────────
@@ -192,6 +200,12 @@ function scaleCanvas() {
 }
 scaleCanvas();
 window.addEventListener('resize', scaleCanvas);
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden && gs.state === 'playing') {
+    gs.state = 'paused';
+    document.getElementById('pauseOverlay').style.display = 'flex';
+  }
+});
 
 // ─── Audio ────────────────────────────────────────────────────────────────
 let audioCtx = null;
@@ -288,8 +302,8 @@ const shake = { x: 0, y: 0, timer: 0, mag: 0 };
 function updateCamera(player, dt) {
   const tx = player.x - VW/2;
   const ty = player.y - VH/2;
-  cam.x += (tx - cam.x) * 0.08;
-  cam.y += (ty - cam.y) * 0.08;
+  if (isFinite(tx)) cam.x += (tx - cam.x) * 0.08;
+  if (isFinite(ty)) cam.y += (ty - cam.y) * 0.08;
   cam.x = Math.max(0, Math.min(WW - VW, cam.x));
   cam.y = Math.max(0, Math.min(WH - VH, cam.y));
   // screen shake
@@ -320,6 +334,283 @@ function triggerZoomPulse() {
 // world->screen
 function wx(x) { return x - cam.x + shake.x; }
 function wy(y) { return y - cam.y + shake.y; }
+
+// ─── Offscreen Environment Canvas ─────────────────────────────────────────
+const grassSeeds = [
+  [300,200],[420,300],[700,150],[900,200],[1100,350],[1300,250],
+  [200,700],[350,850],[600,900],[850,800],[1100,750],[1350,800],
+  [1450,400],[1500,600],[200,400],[150,600],
+];
+let envCanvas;
+function buildEnvCanvas() {
+  envCanvas = document.createElement('canvas');
+  envCanvas.width = WW; envCanvas.height = WH;
+  const ec = envCanvas.getContext('2d');
+  ec.fillStyle = '#c8a870';
+  ec.fillRect(0, 0, WW, WH);
+  ec.fillStyle = '#a07848';
+  ec.fillRect(0, 0, WW, 80);
+  ec.fillRect(0, WH-80, WW, 80);
+  ec.fillRect(0, 0, 80, WH);
+  ec.fillRect(WW-80, 0, 80, WH);
+  ec.fillStyle = 'rgba(100,65,20,0.35)';
+  ec.beginPath();
+  ec.ellipse(640, 550, 500, 120, 0, 0, Math.PI*2);
+  ec.fill();
+  ec.fillStyle = 'rgba(80,130,40,0.35)';
+  for (const [gx,gy] of grassSeeds) {
+    ec.beginPath();
+    ec.ellipse(gx, gy, 28, 16, 0, 0, Math.PI*2);
+    ec.fill();
+  }
+}
+buildEnvCanvas();
+
+// ─── Menu Background ───────────────────────────────────────────────────────
+function drawMenuBackground() {
+  const t = performance.now() / 1000;
+  // Sky gradient
+  const sky = ctx.createLinearGradient(0, 0, 0, VH * 0.58);
+  sky.addColorStop(0, '#0d1828');
+  sky.addColorStop(0.6, '#1e3a5e');
+  sky.addColorStop(1, '#3a5040');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, VW, VH);
+  // Stars
+  const starPts = [[60,25],[140,15],[240,35],[370,20],[480,10],[590,30],[670,18],[740,42],[80,60],[200,55],[340,70],[500,48],[620,65],[150,40],[710,30]];
+  for (let i = 0; i < starPts.length; i++) {
+    const [sx,sy] = starPts[i];
+    ctx.globalAlpha = 0.35 + 0.5 * Math.abs(Math.sin(t * 1.3 + i));
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(sx, sy, 1.2, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  // Ground
+  const gnd = ctx.createLinearGradient(0, VH*0.56, 0, VH);
+  gnd.addColorStop(0, '#d4aa74');
+  gnd.addColorStop(1, '#9a7240');
+  ctx.fillStyle = gnd;
+  ctx.fillRect(0, VH*0.56, VW, VH*0.44);
+  // Dirt path
+  ctx.fillStyle = 'rgba(90,55,15,0.45)';
+  ctx.beginPath();
+  ctx.ellipse(VW/2, VH*0.66, VW*0.44, 32, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Castle left
+  drawMenuCastle(t);
+  // Village right
+  drawMenuVillage(t);
+  // Walking orcs
+  for (let i = 0; i < 3; i++) {
+    const spd = 38 + i * 14;
+    const ox = ((t * spd + i * (VW / 3)) % (VW + 100)) - 50;
+    const oy = VH * 0.60 + i * 16;
+    drawMenuOrc(ox, oy, t + i * 2.1);
+  }
+}
+
+function drawMenuCastle(t) {
+  const cx = 60, cy = VH * 0.56;
+  // main wall
+  ctx.fillStyle = '#707880';
+  ctx.fillRect(cx, cy - 110, 20, 110);
+  // tower
+  ctx.fillStyle = '#808890';
+  ctx.fillRect(cx - 10, cy - 155, 52, 155);
+  // battlements
+  for (let i = 0; i < 5; i++) {
+    if (i % 2 === 0) ctx.fillRect(cx - 10 + i * 11, cy - 165, 10, 12);
+  }
+  // arched window (animated glow)
+  const winA = 0.65 + 0.35 * Math.sin(t * 0.9);
+  ctx.globalAlpha = winA;
+  ctx.fillStyle = '#ffcc44';
+  ctx.beginPath();
+  ctx.arc(cx + 16, cy - 108, 8, Math.PI, 0);
+  ctx.lineTo(cx + 24, cy - 100);
+  ctx.lineTo(cx + 8, cy - 100);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  // Gate archway
+  ctx.fillStyle = '#111';
+  ctx.beginPath();
+  ctx.arc(cx + 16, cy - 28, 15, Math.PI, 0);
+  ctx.lineTo(cx + 31, cy);
+  ctx.lineTo(cx + 1, cy);
+  ctx.closePath();
+  ctx.fill();
+  // portcullis bars
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 2;
+  for (let bi = 0; bi < 3; bi++) {
+    ctx.beginPath();
+    ctx.moveTo(cx + 4 + bi * 10, cy - 43);
+    ctx.lineTo(cx + 4 + bi * 10, cy);
+    ctx.stroke();
+  }
+  ctx.beginPath(); ctx.moveTo(cx + 1, cy - 22); ctx.lineTo(cx + 31, cy - 22); ctx.stroke();
+}
+
+function drawMenuVillage(t) {
+  const vx = VW - 190, cy = VH * 0.56;
+  // house 1
+  ctx.fillStyle = '#c09060';
+  ctx.fillRect(vx, cy - 80, 80, 80);
+  ctx.fillStyle = '#7a3a08';
+  ctx.beginPath();
+  ctx.moveTo(vx - 5, cy - 80); ctx.lineTo(vx + 40, cy - 118); ctx.lineTo(vx + 85, cy - 80);
+  ctx.closePath(); ctx.fill();
+  // window glow
+  ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 1.1);
+  ctx.fillStyle = '#ffcc44';
+  ctx.fillRect(vx + 12, cy - 62, 18, 18);
+  ctx.globalAlpha = 1;
+  // house 2
+  ctx.fillStyle = '#b88050';
+  ctx.fillRect(vx + 90, cy - 60, 60, 60);
+  ctx.fillStyle = '#882808';
+  ctx.beginPath();
+  ctx.moveTo(vx + 85, cy - 60); ctx.lineTo(vx + 120, cy - 95); ctx.lineTo(vx + 155, cy - 60);
+  ctx.closePath(); ctx.fill();
+  // market stall canopy
+  ctx.fillStyle = '#c04020';
+  ctx.beginPath();
+  ctx.moveTo(vx - 35, cy - 30); ctx.lineTo(vx + 5, cy - 58); ctx.lineTo(vx + 45, cy - 30);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#801010'; ctx.lineWidth = 1.5; ctx.stroke();
+  // stall counter
+  ctx.fillStyle = '#8b5520';
+  ctx.fillRect(vx - 32, cy - 30, 76, 9);
+  ctx.strokeStyle = '#6a4010'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(vx - 28, cy - 21); ctx.lineTo(vx - 28, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(vx + 38, cy - 21); ctx.lineTo(vx + 38, cy); ctx.stroke();
+  ctx.strokeStyle = '#8b5520'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(vx + 5, cy - 68); ctx.lineTo(vx + 5, cy - 21); ctx.stroke();
+}
+
+function drawMenuOrc(x, y, t) {
+  const legOff = Math.sin(t * 5) * 5;
+  ctx.globalAlpha = 0.88;
+  ctx.fillStyle = '#2a7a2a';
+  ctx.beginPath(); ctx.ellipse(x, y, 9, 7, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x, y - 11, 8, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#ff3333';
+  ctx.beginPath(); ctx.arc(x - 3, y - 12, 2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + 3, y - 12, 2, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#fffde0';
+  ctx.fillRect(x - 4, y - 7, 2, 4);
+  ctx.fillRect(x + 2, y - 7, 2, 4);
+  ctx.fillStyle = '#1a5a1a';
+  ctx.fillRect(x - 6, y + 5, 4, 7 + legOff);
+  ctx.fillRect(x + 2, y + 5, 4, 7 - legOff);
+  ctx.fillStyle = '#8b5520';
+  ctx.fillRect(x + 9, y - 10, 3, 15);
+  ctx.fillRect(x + 7, y - 14, 7, 7);
+  ctx.globalAlpha = 1;
+}
+
+// ─── Win/Victory Screen ────────────────────────────────────────────────────
+function drawWinBackground() {
+  const grad = ctx.createLinearGradient(0, 0, 0, VH);
+  grad.addColorStop(0, '#1a1200');
+  grad.addColorStop(0.3, '#5a3c00');
+  grad.addColorStop(0.7, '#3a2800');
+  grad.addColorStop(1, '#0e0a00');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, VW, VH);
+  ctx.strokeStyle = '#ffd700';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(8, 8, VW - 16, VH - 16);
+  ctx.strokeStyle = 'rgba(255,215,0,0.3)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(14, 14, VW - 28, VH - 28);
+  updateConfetti(1/60);
+  drawConfetti();
+}
+
+function spawnConfetti() {
+  if (!gs.confetti) gs.confetti = [];
+  gs.confetti = [];
+  const colors = ['#ff4444','#ffd700','#44ff44','#4488ff','#ff44ff','#ffaa00','#00ffdd'];
+  for (let i = 0; i < 32; i++) {
+    gs.confetti.push({
+      x: Math.random() * VW,
+      y: -10 - Math.random() * 120,
+      vx: (Math.random() - 0.5) * 55,
+      vy: 50 + Math.random() * 70,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      w: 7 + Math.random() * 6,
+      h: 4 + Math.random() * 4,
+      rot: Math.random() * Math.PI * 2,
+      rotV: (Math.random() - 0.5) * 5,
+    });
+  }
+}
+
+function updateConfetti(dt) {
+  if (!gs.confetti) return;
+  for (const c of gs.confetti) {
+    c.x += c.vx * dt;
+    c.y += c.vy * dt;
+    c.rot += c.rotV * dt;
+    if (c.y > VH + 20) { c.y = -10; c.x = Math.random() * VW; }
+  }
+}
+
+function drawConfetti() {
+  if (!gs.confetti) return;
+  for (const c of gs.confetti) {
+    ctx.save();
+    ctx.translate(c.x, c.y);
+    ctx.rotate(c.rot);
+    ctx.fillStyle = c.color;
+    ctx.fillRect(-c.w/2, -c.h/2, c.w, c.h);
+    ctx.restore();
+  }
+}
+
+// ─── Boss Health Bar (top of screen) ──────────────────────────────────────
+function drawBossBar() {
+  const boss = gs.orcs.find(o => o.boss);
+  if (!boss) return;
+  const barW = VW * 0.48;
+  const barH = 18;
+  const barX = (VW - barW) / 2;
+  const barY = 10;
+  ctx.fillStyle = 'rgba(0,0,0,0.78)';
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(barX - 8, barY - 2, barW + 16, barH + 20, 5);
+  else ctx.rect(barX - 8, barY - 2, barW + 16, barH + 20);
+  ctx.fill();
+  ctx.fillStyle = '#ffd700';
+  ctx.font = 'bold 11px Georgia';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText('⚔ BOSS ⚔', barX + barW / 2, barY);
+  const fillW = barW * Math.max(0, boss.hp / boss.maxHp);
+  ctx.fillStyle = '#300';
+  ctx.fillRect(barX, barY + 14, barW, barH - 4);
+  const bgrad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+  bgrad.addColorStop(0, '#aa0000');
+  bgrad.addColorStop(0.5, '#ff3333');
+  bgrad.addColorStop(1, '#ff8800');
+  ctx.fillStyle = bgrad;
+  ctx.fillRect(barX, barY + 14, fillW, barH - 4);
+  ctx.strokeStyle = '#880000';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(barX, barY + 14, barW, barH - 4);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 9px Georgia';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(boss.hp + ' / ' + boss.maxHp, barX + barW / 2, barY + 14 + (barH - 4) / 2);
+  ctx.textBaseline = 'alphabetic';
+}
+
+// wave 1 hint timer (module scope)
+let waveHintTimer = 0;
 
 // ─── Input ─────────────────────────────────────────────────────────────────
 const keys = {};
@@ -402,8 +693,12 @@ function initGameState() {
     shieldRune: 0, bombCount: 0, soldierUpgrades: 0,
     stunTimer: 0,
     screenFlash: 0,
+    attackFlash: 0,
+    bossFlash: 0,
     waveStartTime: 0,
     soldierHireCount: 0,
+    confetti: [],
+    totalKills: 0,
     timedBuffs: [],
     whirlwindCooldown: 0,
     whirlwindTimer: 0,
@@ -539,6 +834,12 @@ function drawOrc(o) {
   const flash = o.hitFlash > 0;
   const rage = o.boss && o.hp < o.maxHp * 0.5;
 
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.30)';
+  ctx.beginPath();
+  ctx.ellipse(x + 3, y + 20 * Math.min(sc, 2.2), 14 * Math.min(sc, 2.2), 5 * Math.min(sc, 2.2), 0, 0, Math.PI*2);
+  ctx.fill();
+
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(sc, sc);
@@ -670,23 +971,10 @@ function drawOrc(o) {
     const bx = wx(o.x) - bw/2, by = wy(o.y) - (15 * sc + 6);
     ctx.fillStyle = '#400';
     ctx.fillRect(bx, by, bw, bh);
-    ctx.fillStyle = o.type === 'shaman' ? '#aa44ff' : '#f44';
-    ctx.fillRect(bx, by, bw * (o.hp / o.maxHp), bh);
-  } else {
-    const bw = 60;
-    const bx = wx(o.x) - bw/2, by = wy(o.y) - 38;
-    ctx.fillStyle = '#400';
-    ctx.fillRect(bx, by, bw, 6);
     ctx.fillStyle = '#f44';
-    ctx.fillRect(bx, by, bw * (o.hp / o.maxHp), 6);
-    ctx.strokeStyle = '#800';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(bx, by, bw, 6);
-    ctx.fillStyle = '#ffd700';
-    ctx.font = 'bold 11px Georgia';
-    ctx.textAlign = 'center';
-    ctx.fillText('BOSS', wx(o.x), by - 2);
+    ctx.fillRect(bx, by, bw * (o.hp / o.maxHp), bh);
   }
+  // Boss HP is shown at top of screen by drawBossBar()
   // Stun stars
   if (o.stunTimer > 0) {
     const t = performance.now() / 300;
@@ -794,31 +1082,8 @@ function drawWorld() {
   for (let gx = 0; gx < WW; gx += 64) { ctx.beginPath(); ctx.moveTo(wx(gx), wy(0)); ctx.lineTo(wx(gx), wy(WH)); ctx.stroke(); }
   for (let gy = 0; gy < WH; gy += 64) { ctx.beginPath(); ctx.moveTo(wx(0), wy(gy)); ctx.lineTo(wx(WW), wy(gy)); ctx.stroke(); }
 
-  // Darker ground near walls
-  ctx.fillStyle = '#a07848';
-  ctx.fillRect(wx(0), wy(0), WW, 80);
-  ctx.fillRect(wx(0), wy(WH-80), WW, 80);
-  ctx.fillRect(wx(0), wy(0), 80, WH);
-  ctx.fillRect(wx(WW-80), wy(0), 80, WH);
-
-  // Dirt path (center to castle)
-  ctx.fillStyle = 'rgba(100,65,20,0.35)';
-  ctx.beginPath();
-  ctx.ellipse(wx(640), wy(550), 500, 120, 0, 0, Math.PI*2);
-  ctx.fill();
-
-  // Grass patches
-  ctx.fillStyle = 'rgba(80,130,40,0.35)';
-  const grassSeeds = [
-    [300,200],[420,300],[700,150],[900,200],[1100,350],[1300,250],
-    [200,700],[350,850],[600,900],[850,800],[1100,750],[1350,800],
-    [1450,400],[1500,600],[200,400],[150,600],
-  ];
-  for (const [gx,gy] of grassSeeds) {
-    ctx.beginPath();
-    ctx.ellipse(wx(gx), wy(gy), 28, 16, 0, 0, Math.PI*2);
-    ctx.fill();
-  }
+  // Static environment (ground, grass, path) from offscreen canvas
+  ctx.drawImage(envCanvas, wx(0), wy(0));
 
   // ── Castle Ruins (left side) ──
   drawCastle();
@@ -836,12 +1101,33 @@ function drawWorld() {
     ctx.beginPath();
     ctx.ellipse(wx(rx), wy(ry), 12, 8, 0.3, 0, Math.PI*2);
     ctx.fill();
-    ctx.fillStyle = '#bbaA99';
+    ctx.fillStyle = '#bbaa99';
     ctx.beginPath();
     ctx.ellipse(wx(rx-2), wy(ry-1), 5, 3, 0.3, 0, Math.PI*2);
     ctx.fill();
     ctx.fillStyle = '#998877';
   }
+
+  // ── Well (decorative) ──
+  const wellX = 800, wellY = 500;
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.beginPath(); ctx.ellipse(wx(wellX+4), wy(wellY+17), 18, 7, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#909090';
+  ctx.beginPath(); ctx.ellipse(wx(wellX), wy(wellY+12), 16, 7, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#888';
+  ctx.beginPath(); ctx.arc(wx(wellX), wy(wellY), 16, Math.PI, 0); ctx.fill();
+  ctx.fillRect(wx(wellX)-16, wy(wellY), 32, 12);
+  ctx.strokeStyle = '#707070'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.ellipse(wx(wellX), wy(wellY+12), 16, 7, 0, 0, Math.PI*2); ctx.stroke();
+  ctx.strokeRect(wx(wellX)-16, wy(wellY), 32, 12);
+  ctx.strokeStyle = '#8b5520'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(wx(wellX-22), wy(wellY-10)); ctx.lineTo(wx(wellX+22), wy(wellY-10)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(wx(wellX-22), wy(wellY-24)); ctx.lineTo(wx(wellX-22), wy(wellY+2)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(wx(wellX+22), wy(wellY-24)); ctx.lineTo(wx(wellX+22), wy(wellY+2)); ctx.stroke();
+  ctx.strokeStyle = '#6a4010'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(wx(wellX-24), wy(wellY-24)); ctx.lineTo(wx(wellX), wy(wellY-34)); ctx.lineTo(wx(wellX+24), wy(wellY-24)); ctx.stroke();
+  ctx.strokeStyle = '#cc9944'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(wx(wellX), wy(wellY-10)); ctx.lineTo(wx(wellX), wy(wellY+2)); ctx.stroke();
 
   // ── Stone Walls (border) ──
   drawWalls();
@@ -927,6 +1213,38 @@ function drawCastle() {
     ctx.ellipse(wx(rx), wy(ry), 6, 4, 0.5, 0, Math.PI*2);
     ctx.fill();
   }
+
+  // Castle gate (archway in the tower wall)
+  const gateCX = cx + 31, gateBottom = 360;
+  ctx.fillStyle = '#111';
+  ctx.beginPath();
+  ctx.arc(wx(gateCX), wy(gateBottom - 22), 19, Math.PI, 0);
+  ctx.lineTo(wx(gateCX + 19), wy(gateBottom));
+  ctx.lineTo(wx(gateCX - 19), wy(gateBottom));
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#444'; ctx.lineWidth = 2;
+  for (let bi = 0; bi < 3; bi++) {
+    ctx.beginPath();
+    ctx.moveTo(wx(gateCX - 13 + bi * 13), wy(gateBottom - 41));
+    ctx.lineTo(wx(gateCX - 13 + bi * 13), wy(gateBottom));
+    ctx.stroke();
+  }
+  ctx.beginPath(); ctx.moveTo(wx(gateCX - 19), wy(gateBottom - 22)); ctx.lineTo(wx(gateCX + 19), wy(gateBottom - 22)); ctx.stroke();
+
+  // Weapon rack near castle
+  const wrX = cx + 90, wrY = 440;
+  ctx.strokeStyle = '#8b5520'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(wx(wrX), wy(wrY)); ctx.lineTo(wx(wrX + 40), wy(wrY)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(wx(wrX + 20), wy(wrY - 15)); ctx.lineTo(wx(wrX + 20), wy(wrY + 20)); ctx.stroke();
+  ctx.strokeStyle = '#c0c8d0'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(wx(wrX + 8), wy(wrY - 22)); ctx.lineTo(wx(wrX + 8), wy(wrY + 5)); ctx.stroke();
+  ctx.strokeStyle = '#8b5520'; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(wx(wrX + 4), wy(wrY - 2)); ctx.lineTo(wx(wrX + 13), wy(wrY - 2)); ctx.stroke();
+  ctx.strokeStyle = '#c0c8d0'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(wx(wrX + 30), wy(wrY - 25)); ctx.lineTo(wx(wrX + 34), wy(wrY + 8)); ctx.stroke();
+  ctx.fillStyle = '#aaa';
+  ctx.beginPath(); ctx.moveTo(wx(wrX+35),wy(wrY-5)); ctx.lineTo(wx(wrX+43),wy(wrY-13)); ctx.lineTo(wx(wrX+43),wy(wrY+2)); ctx.closePath(); ctx.fill();
 }
 
 function drawVillage() {
@@ -957,6 +1275,25 @@ function drawVillage() {
   for (let bi = -1; bi <= 1; bi++) { ctx.beginPath(); ctx.ellipse(wx(vx+115), wy(415 + bi*9), 12, 4, 0, 0, Math.PI*2); ctx.stroke(); }
   drawHaystack(vx - 30, 500); drawHaystack(vx + 260, 580);
   drawMarketStall(vx - 80, 600);
+
+  // Market stall canopy
+  const stallX = vx - 80, stallY = 370;
+  ctx.fillStyle = '#b83020';
+  ctx.beginPath();
+  ctx.moveTo(wx(stallX), wy(stallY + 38));
+  ctx.lineTo(wx(stallX + 35), wy(stallY));
+  ctx.lineTo(wx(stallX + 70), wy(stallY + 38));
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#801010'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = '#8b5520';
+  ctx.fillRect(wx(stallX + 2), wy(stallY + 38), 66, 10);
+  ctx.fillStyle = '#a07030';
+  ctx.fillRect(wx(stallX + 3), wy(stallY + 39), 64, 6);
+  ctx.strokeStyle = '#6a4010'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(wx(stallX + 5), wy(stallY + 48)); ctx.lineTo(wx(stallX + 5), wy(stallY + 70)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(wx(stallX + 65), wy(stallY + 48)); ctx.lineTo(wx(stallX + 65), wy(stallY + 70)); ctx.stroke();
+  ctx.strokeStyle = '#8b5520'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(wx(stallX + 35), wy(stallY - 14)); ctx.lineTo(wx(stallX + 35), wy(stallY + 48)); ctx.stroke();
 }
 
 function drawHaystack(hx, hy) {
@@ -1205,6 +1542,7 @@ function spawnDustCloud(x, y) {
 }
 
 function spawnDmgNum(x, y, val, color) {
+  if (gs.dmgNums.length >= 40) gs.dmgNums.shift();
   gs.dmgNums.push({ x, y, val, color: color||'#ff4', vy: -60, life: 1.0 });
 }
 
@@ -1242,6 +1580,13 @@ function drawParticles() {
       ctx.strokeStyle = '#cc3311';
       ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(wx(p.x), wy(p.y), p.r, 0, Math.PI*2); ctx.stroke();
+    } else if (p.color === 'star') {
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = '#ffd700';
+      ctx.font = 'bold ' + Math.round(p.r * 2) + 'px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('★', wx(p.x), wy(p.y));
     } else {
       ctx.globalAlpha = alpha;
       ctx.fillStyle = p.color;
@@ -1396,15 +1741,22 @@ function drawMinimap() {
 
 // ─── Coin ──────────────────────────────────────────────────────────────────
 function drawCoins() {
-  for (const c of gs.coins) {
+  const t = performance.now() / 300;
+  for (let ci = 0; ci < gs.coins.length; ci++) {
+    const c = gs.coins[ci];
     if (!isOnScreen(c.x, c.y, 20)) continue;
+    const spinSc = 0.2 + 0.8 * Math.abs(Math.sin(t + ci * 1.3));
+    ctx.save();
+    ctx.translate(wx(c.x), wy(c.y));
+    ctx.scale(spinSc, 1);
     ctx.fillStyle = '#ffd700';
     ctx.strokeStyle = '#a07000';
     ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(wx(c.x), wy(c.y), 6, 0, Math.PI*2);
+    ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI*2);
     ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#ffe860';
-    ctx.beginPath(); ctx.arc(wx(c.x)-1, wy(c.y)-1, 3, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(-1, -1, 3, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
   }
 }
 
@@ -1464,6 +1816,7 @@ function tryAttack() {
   p.attackCooldown = cooldown;
   p.attackAnim = 0.25;
   playSound('swing'); triggerZoomPulse();
+  gs.attackFlash = 0.07; // subtle white flash
 
   // Attack range in facing direction
   const ax = p.x + Math.cos(p.angle) * 28;
@@ -1489,6 +1842,11 @@ function tryAttack() {
       spawnParticles(o.x, o.y, '#998877', 3); // dust
       playSound('orcHit');
       spawnDmgNum(o.x, o.y - o.r - 10, dmg, '#ff4');
+      // Star burst on hit
+      for (let si = 0; si < 2 + Math.floor(Math.random()*2); si++) {
+        gs.particles.push({ x: o.x+(Math.random()-0.5)*22, y: o.y+(Math.random()-0.5)*22,
+          vx:(Math.random()-0.5)*90, vy:-55-Math.random()*55, r:8, color:'star', life:0.55, maxLife:0.55, gravity:-20 });
+      }
 
       if (o.hp <= 0 && !o.killed) { o.killed = true; killOrc(o); }
     }
@@ -1500,7 +1858,18 @@ function tryAttack() {
 }
 
 function killOrc(o) {
-  const goldBase = o.boss ? 20 : (o.type === 'shaman' ? 15 : (o.type === 'armoured' ? 8 : (o.type === 'goblin' ? 3 : 5)));
+  const goldBase = o.boss ? 20 : (o.type === 'armoured' ? 8 : (o.type === 'goblin' ? 3 : 5));
+  if (o.boss) {
+    gs.screenFlash = 0.5;
+    triggerShake(14, 0.8);
+    setTimeout(() => showAnnounce('+BOSS SLAIN+'), 100);
+    addKillFeed('+BOSS SLAIN+', '#ffd700');
+    for (let bi = 0; bi < 3; bi++) {
+      spawnParticles(o.x, o.y, '#ffd700', 14);
+      spawnParticles(o.x, o.y, '#ff8800', 8);
+    }
+    playSound('orcDeath', 2.5);
+  }
   const xpVal = o.boss ? 50 : (o.type === 'shaman' ? 30 : (o.type === 'armoured' ? 12 : 5));
   // combo multiplier
   gs.killStreak++;
@@ -1517,6 +1886,7 @@ function killOrc(o) {
   gs.totalOrcsKilled++;
   gs.player.xp += xpVal;
   gs.coins.push({ x: o.x, y: o.y, r: 6, val: goldVal });
+  while (gs.coins.length > 80) gs.coins.shift();
   spawnBloodDeath(o.x, o.y);
   spawnParticles(o.x, o.y, '#44cc44', 6);
   spawnDmgNum(o.x, o.y - 20, '+' + goldVal + 'g', '#ffd700');
@@ -1633,7 +2003,7 @@ function spawnOrc(forceBoss) {
   // Don't spawn inside visible screen
   if (isOnScreen(x, y, 60)) return false;
   gs.orcs.push(o);
-  if (boss) { playSound('bossSpawn'); showAnnounce('BOSS INCOMING!'); }
+  if (boss) { playSound('bossSpawn'); showAnnounce('BOSS WAVE!', '#ff2020'); gs.bossFlash = 0.35; triggerShake(8, 0.5); }
   return true;
 }
 
@@ -1928,6 +2298,7 @@ function startWave() {
 
   // Cheer soldiers on new wave start
   for (const s of gs.soldiers) s.cheerTimer = 1.0;
+  if (gs.wave === 1) waveHintTimer = 9.0;
 
   let baseCount = gs.wave === 1 ? 5 : (4 + gs.wave * 2 + (gs.wave > 5 ? gs.wave : 0));
   gs.hordeWave = (gs.wave === 25);
@@ -1940,21 +2311,29 @@ function startWave() {
   spawnTimer = 0;
   spawnInterval = 0.15; // stagger 0.15s apart
   waveState = 'spawning';
+  document.getElementById('shopBtn').title = 'Available between waves';
   gs.shopOpen = false;
   document.getElementById('shopOverlay').style.display = 'none';
   showAnnounce('WAVE ' + gs.wave);
 }
 
-function showAnnounce(txt) {
+function showAnnounce(txt, color) {
   const el = document.getElementById('waveAnnounce');
   el.textContent = txt;
-  el.style.opacity = '1';
+  el.style.color = color || (txt.includes('BOSS') ? '#ff2020' : (txt.includes('HORDE') ? '#ffd700' : '#ff8800'));
   el.style.transition = 'none';
-  el.style.fontSize = '42px';
-  setTimeout(() => {
-    el.style.transition = 'opacity 0.8s';
-    el.style.opacity = '0';
-  }, 1500);
+  el.style.top = '-80px';
+  el.style.opacity = '1';
+  // Trigger slide in
+  requestAnimationFrame(() => {
+    el.style.transition = 'top 0.4s cubic-bezier(.22,.68,0,1.1)';
+    el.style.top = '40px';
+    setTimeout(() => {
+      el.style.transition = 'top 0.4s ease-in, opacity 0.5s';
+      el.style.top = '-80px';
+      el.style.opacity = '0';
+    }, 1800);
+  });
 }
 
 function updateWave(dt) {
@@ -2035,8 +2414,8 @@ function updateCoins(dt) {
   for (let i = gs.coins.length - 1; i >= 0; i--) {
     const c = gs.coins[i];
     if (dist(c, p) < 110) {
-      gs.gold += c.val; // already added at kill, this is for visual pop
       spawnParticles(c.x, c.y, '#ffd700', 3);
+      spawnDmgNum(c.x, c.y - 10, '+' + c.val + 'g', '#ffe040');
       playSound('coin');
       gs.coins.splice(i, 1);
       updateHUD();
@@ -2049,11 +2428,12 @@ function updateHUD() {
   const p = gs.player;
   document.getElementById('scoreVal').textContent = gs.score;
   document.getElementById('hpFill').style.width = (100 * p.hp / p.maxHp) + '%';
+  document.getElementById('bottomBar').classList.toggle('hp-danger', p.hp / p.maxHp < 0.25);
   document.getElementById('hpText').textContent = p.hp + '/' + p.maxHp;
   document.getElementById('xpFill').style.width = (100 * p.xp / p.xpNext) + '%';
   document.getElementById('levelLabel').textContent = 'Lv ' + p.level;
   const bombStr = gs.bombCount > 0 ? ' 💣' + gs.bombCount : '';
-  document.getElementById('goldDisplay').textContent = '\u2605 ' + gs.gold + bombStr;
+  document.getElementById('goldDisplay').innerHTML = '<span id="goldCoinIcon">\u2605</span> ' + gs.gold + bombStr;
   const buffBar = document.getElementById('buffBar');
   if (buffBar) {
     buffBar.innerHTML = '';
@@ -2085,6 +2465,7 @@ function updateHUD() {
 // ─── Shop ──────────────────────────────────────────────────────────────────
 function openShop() {
   if (gs.state !== 'playing' && gs.state !== 'shop') return;
+  document.getElementById('shopBtn').title = '';
   gs.shopOpen = true;
   gs.state = 'shop';
   const p = gs.player;
@@ -2339,9 +2720,22 @@ function gameOver() {
 function winGame() {
   gs.state = 'win';
   checkAndSaveHighScore();
+  spawnConfetti();
   const hs = loadHighScores();
   const ov = document.getElementById('overlay');
-  ov.innerHTML = `<h1 style="color:#ffd700">VICTORY!</h1><div class="subtitle">All 50 waves complete!</div><div class="controls-hint">Score: ${gs.score} | Orcs: ${gs.totalOrcsKilled||0}<br><span style="color:#888;font-size:12px">High Score: ${hs.highScore||0}</span><br>A true champion!</div><button onclick="startGame()">&#9658; PLAY AGAIN</button>`;
+  ov.innerHTML = `
+    <h1 style="color:#ffd700;font-size:52px;text-shadow:0 0 30px #ff8800,0 0 60px #ffd700,2px 2px 8px #000;">VILLAGE SAVED!</h1>
+    <div class="subtitle" style="font-size:20px;color:#ffdd88;">You survived all 50 waves of orcs!</div>
+    <div class="controls-hint" style="margin:14px 0;line-height:2;">
+      Final Score: <strong style="color:#ffd700;">${gs.score}</strong><br>
+      Waves Completed: <strong style="color:#ffd700;">50 / 50</strong><br>
+      Best Score: ${hs.highScore} &nbsp;|&nbsp; Best Wave: ${hs.bestWave}
+    </div>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button onclick="startGame()">&#9658; PLAY AGAIN</button>
+      <button onclick="(function(){try{navigator.clipboard.writeText('Knight Orc Assault - Score: ${gs.score} | 50/50 Waves! Play at: ' + location.href);}catch(e){}; this.textContent='Copied!'; setTimeout(()=>this.textContent='Share Score',1800);})()" style="background:linear-gradient(180deg,#4488cc,#225588);">Share Score</button>
+    </div>
+  `;
   ov.style.display = 'flex';
 }
 
@@ -2375,6 +2769,9 @@ function update(dt) {
   const p = gs.player;
   const adt = dt * gs.dtMult;
   if (gs.screenFlash > 0) gs.screenFlash -= dt;
+  if (gs.attackFlash > 0) gs.attackFlash = Math.max(0, gs.attackFlash - dt * 4);
+  if (gs.bossFlash > 0) gs.bossFlash = Math.max(0, gs.bossFlash - dt * 3);
+  if (waveHintTimer > 0) waveHintTimer -= dt;
 
   // Movement
   let mx = 0, my = 0;
@@ -2430,8 +2827,20 @@ function update(dt) {
 function draw() {
   ctx.clearRect(0, 0, VW, VH);
 
-  if (gs.state === 'menu' || gs.state === 'gameover' || gs.state === 'win') {
+  if (gs.state === 'menu') {
     drawMenuBackground();
+    return;
+  }
+  if (gs.state === 'gameover') {
+    ctx.fillStyle = '#150d0d';
+    ctx.fillRect(0, 0, VW, VH);
+    ctx.strokeStyle = '#660000';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(8, 8, VW - 16, VH - 16);
+    return;
+  }
+  if (gs.state === 'win') {
+    drawWinBackground();
     return;
   }
 
@@ -2465,10 +2874,22 @@ function draw() {
   // Combo texts and sparkles
   drawComboTexts(); drawSparkles();
 
-  // Attack range indicator (faint)
+  // Attack range indicator with afterimage arcs
   if (gs.player.attackAnim > 0) {
     const p = gs.player;
-    ctx.globalAlpha = gs.player.attackAnim * 0.3;
+    // Afterimage copies
+    for (let ai = 1; ai <= 3; ai++) {
+      const aOff = (ai - 2) * 0.28;
+      const aAngle = p.angle + aOff;
+      ctx.globalAlpha = p.attackAnim * 0.12 / ai;
+      ctx.strokeStyle = '#ffffaa';
+      ctx.lineWidth = 1.5;
+      const cx_ = wx(p.x + Math.cos(aAngle)*28), cy_ = wy(p.y + Math.sin(aAngle)*28);
+      ctx.beginPath();
+      ctx.arc(cx_, cy_, 52, aAngle - 0.9, aAngle + 0.9);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = p.attackAnim * 0.3;
     ctx.strokeStyle = '#ffffaa';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -2507,6 +2928,37 @@ function draw() {
     ctx.globalAlpha = 1;
   }
 
+  // Boss health bar at top of screen
+  drawBossBar();
+
+  // Attack flash (white, subtle)
+  if (gs.attackFlash > 0) {
+    ctx.globalAlpha = gs.attackFlash * 0.7;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, VW, VH);
+    ctx.globalAlpha = 1;
+  }
+
+  // Wave 1 control hints
+  if (waveHintTimer > 0 && (gs.state === 'playing' || gs.state === 'dying')) {
+    const alpha = Math.min(1, waveHintTimer);
+    ctx.globalAlpha = alpha * 0.88;
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(VW/2 - 215, VH - 110, 430, 46, 8);
+    else ctx.rect(VW/2 - 215, VH - 110, 430, 46);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '13px Georgia';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('WASD: Move  |  Click/Space: Attack  |  E: Shop  |  B: Bomb  |  P: Pause', VW/2, VH - 90);
+    ctx.fillStyle = '#ffcc66';
+    ctx.font = '11px Georgia';
+    ctx.fillText('Kill orcs, collect gold, upgrade in the shop between waves!', VW/2, VH - 73);
+    ctx.globalAlpha = 1;
+  }
+
   // Soldier portraits HUD
   updateSoldierPortraits();
 }
@@ -2524,48 +2976,8 @@ function updateSoldierPortraits() {
   }
 }
 
-
-// ─── Menu Background ─────────────────────────────────────────────────────────
-const menuPtcls = [];
-for (let mi = 0; mi < 55; mi++) menuPtcls.push({ x: Math.random()*VW, y: Math.random()*VH, vx: (Math.random()-0.5)*20, vy: -6-Math.random()*16, r: 1+Math.random()*2.5, a: 0.15+Math.random()*0.4 });
-let menuBobT = 0;
-
-function drawMenuBackground() {
-  ctx.fillStyle = '#0e0c18';
-  ctx.fillRect(0, 0, VW, VH);
-  menuBobT += 0.016;
-  for (const mp of menuPtcls) {
-    mp.x += mp.vx * 0.016; mp.y += mp.vy * 0.016;
-    if (mp.y < -10) { mp.y = VH+10; mp.x = Math.random()*VW; }
-    if (mp.x < -10) mp.x = VW+10; if (mp.x > VW+10) mp.x = -10;
-    ctx.globalAlpha = mp.a;
-    ctx.fillStyle = '#ffd700';
-    ctx.beginPath(); ctx.arc(mp.x, mp.y, mp.r, 0, Math.PI*2); ctx.fill();
-  }
-  ctx.globalAlpha = 1;
-  if (gs.state === 'menu') {
-    // Knight preview
-    const bob = Math.sin(menuBobT * 2) * 4;
-    const kx = VW * 0.75, ky = VH * 0.44 + bob;
-    ctx.save(); ctx.translate(kx, ky); ctx.scale(1.5, 1.5);
-    ctx.fillStyle = '#cc2020'; ctx.beginPath(); ctx.ellipse(-2, 4, 9, 12, 0, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#8898a8'; ctx.fillRect(-10, -1, 20, 22);
-    ctx.fillStyle = '#b0bcc8'; ctx.beginPath(); ctx.arc(0, -10, 14, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#444'; ctx.fillRect(-7, -8, 14, 5);
-    ctx.fillStyle = '#222'; ctx.fillRect(-5, -14, 10, 6);
-    ctx.fillStyle = '#88aacc'; ctx.fillRect(-4,-13,3,4); ctx.fillRect(2,-13,3,4);
-    ctx.fillStyle = '#dd1010'; ctx.fillRect(-1, -25, 3, 14);
-    ctx.rotate(Math.sin(menuBobT * 1.5) * 0.2);
-    ctx.fillStyle = '#d0d8e0'; ctx.fillRect(7, -2, 30, 4);
-    ctx.fillStyle = '#8a6020'; ctx.fillRect(4, -4, 6, 8);
-    ctx.restore();
-    // high score
-    const hs = getHighScores();
-    const hsel = document.getElementById('menuHighScore');
-    if (hsel && hs.highScore) hsel.textContent = 'Best: Wave ' + (hs.mostWaves||0) + ' | High Score: ' + hs.highScore;
-  }
-}
 // ─── Game Loop ─────────────────────────────────────────────────────────────
+let rafId = 0;
 function gameLoop(ts) {
   let dt = (ts - lastTime) / 1000;
   if (!isFinite(dt) || isNaN(dt) || dt < 0) dt = 0;
@@ -2573,12 +2985,12 @@ function gameLoop(ts) {
   lastTime = ts;
   update(dt);
   draw();
-  requestAnimationFrame(gameLoop);
+  rafId = requestAnimationFrame(gameLoop);
 }
 
-requestAnimationFrame(function(ts) {
+rafId = requestAnimationFrame(function(ts) {
   lastTime = ts;
-  requestAnimationFrame(gameLoop);
+  rafId = requestAnimationFrame(gameLoop);
 });
 
 // Init menu high score display
