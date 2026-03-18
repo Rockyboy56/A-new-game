@@ -36,12 +36,15 @@ canvas { display: block; }
 #overlay .controls-hint { color: #aaa; font-size: 13px; margin-bottom: 24px; text-align: center; line-height: 1.8; }
 #overlay button { background: linear-gradient(180deg,#c96,#865); color: #fff; border: 3px solid #ffd700; padding: 12px 30px; font-size: 20px; border-radius: 10px; cursor: pointer; font-family: 'Georgia', serif; margin: 5px; text-shadow: 1px 1px 3px #000; }
 #overlay button:hover { background: linear-gradient(180deg,#da7,#976); }
-#shopOverlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(12,8,2,0.97); border: 3px solid #c96; border-radius: 14px; padding: 22px; min-width: 320px; max-width: 380px; color: #fff; z-index: 200; display: none; box-shadow: 0 0 30px rgba(200,150,50,0.4); }
+#shopOverlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(1.0); transform-origin: center center; transition: transform 0.18s cubic-bezier(.22,.68,0,1.2), opacity 0.18s; background: rgba(12,8,2,0.97); border: 3px solid #c96; border-radius: 14px; padding: 22px; min-width: 320px; max-width: 380px; color: #fff; z-index: 200; display: none; box-shadow: 0 0 30px rgba(200,150,50,0.4); }
 #shopOverlay h2 { text-align: center; color: #ffd700; margin-bottom: 4px; font-size: 26px; text-shadow: 0 0 10px #f80; }
 #shopOverlay .shopStats { text-align: center; color: #aaa; font-size: 12px; margin-bottom: 6px; }
 #shopOverlay .goldInfo { text-align: center; color: #ffd700; margin-bottom: 14px; font-size: 15px; font-weight: bold; }
 .shopItem { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; margin-bottom: 6px; background: rgba(255,255,255,0.05); border-radius: 6px; border: 1px solid #444; }
-.shopItem .itemName { font-size: 13px; flex: 1; }
+.shopItem.can-afford { border-color: #c8a020; box-shadow: 0 0 6px rgba(200,160,20,0.35); }
+.shopItem .itemInfo { flex: 1; }
+.shopItem .itemName { font-size: 13px; }
+.shopItem .itemDesc { font-size: 10px; color: #888; margin-top: 1px; }
 .shopItem .itemCost { color: #ffd700; font-size: 12px; margin: 0 10px; white-space: nowrap; }
 .shopItem button { background: linear-gradient(180deg,#5c4,#384); border: 1px solid #6f5; color: #fff; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; white-space: nowrap; }
 .shopItem button:hover:not(:disabled) { background: linear-gradient(180deg,#6d5,#495); }
@@ -146,6 +149,71 @@ function scaleCanvas() {
 scaleCanvas();
 window.addEventListener('resize', scaleCanvas);
 
+// ─── Audio ────────────────────────────────────────────────────────────────
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playSound(type, volMult) {
+  try {
+    const ac = getAudioCtx();
+    const v = volMult || 1.0;
+    const t = ac.currentTime;
+    if (type === 'swing') {
+      const osc = ac.createOscillator(), g = ac.createGain();
+      osc.frequency.setValueAtTime(400, t); osc.frequency.exponentialRampToValueAtTime(200, t+0.1);
+      g.gain.setValueAtTime(0.15*v, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.1);
+      osc.connect(g); g.connect(ac.destination); osc.start(t); osc.stop(t+0.1);
+      const bs = Math.ceil(ac.sampleRate*0.08), buf = ac.createBuffer(1, bs, ac.sampleRate);
+      const bd = buf.getChannelData(0); for (let i=0;i<bs;i++) bd[i]=Math.random()*2-1;
+      const ns = ac.createBufferSource(), ng = ac.createGain();
+      ns.buffer = buf; ng.gain.setValueAtTime(0.1*v,t); ng.gain.exponentialRampToValueAtTime(0.001,t+0.08);
+      ns.connect(ng); ng.connect(ac.destination); ns.start(t); ns.stop(t+0.08);
+    } else if (type === 'orcHit') {
+      const osc = ac.createOscillator(), g = ac.createGain();
+      osc.type='sine'; osc.frequency.setValueAtTime(120,t); osc.frequency.exponentialRampToValueAtTime(60,t+0.08);
+      g.gain.setValueAtTime(0.3*v,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.08);
+      osc.connect(g); g.connect(ac.destination); osc.start(t); osc.stop(t+0.08);
+    } else if (type === 'orcDeath') {
+      const osc = ac.createOscillator(), g = ac.createGain();
+      osc.frequency.setValueAtTime(200,t); osc.frequency.exponentialRampToValueAtTime(50,t+0.15);
+      g.gain.setValueAtTime(0.25*v,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.15);
+      osc.connect(g); g.connect(ac.destination); osc.start(t); osc.stop(t+0.15);
+    } else if (type === 'coin') {
+      const osc = ac.createOscillator(), g = ac.createGain();
+      osc.type='sine'; osc.frequency.setValueAtTime(880,t); osc.frequency.exponentialRampToValueAtTime(1200,t+0.03);
+      g.gain.setValueAtTime(0.15*v,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.06);
+      osc.connect(g); g.connect(ac.destination); osc.start(t); osc.stop(t+0.06);
+    } else if (type === 'levelUp') {
+      [261.63,329.63,392.00].forEach((freq,i) => {
+        const osc=ac.createOscillator(), g=ac.createGain();
+        osc.type='sine'; osc.frequency.setValueAtTime(freq,t+i*0.15);
+        g.gain.setValueAtTime(0,t+i*0.15); g.gain.linearRampToValueAtTime(0.2*v,t+i*0.15+0.01); g.gain.exponentialRampToValueAtTime(0.001,t+i*0.15+0.15);
+        osc.connect(g); g.connect(ac.destination); osc.start(t+i*0.15); osc.stop(t+i*0.15+0.15);
+      });
+    } else if (type === 'playerHurt') {
+      const osc = ac.createOscillator(), g = ac.createGain();
+      osc.type='sawtooth'; osc.frequency.setValueAtTime(150,t); osc.frequency.exponentialRampToValueAtTime(80,t+0.2);
+      g.gain.setValueAtTime(0.2*v,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.2);
+      osc.connect(g); g.connect(ac.destination); osc.start(t); osc.stop(t+0.2);
+    } else if (type === 'waveComplete') {
+      [[659.25,0],[783.99,0.3]].forEach(([freq,delay]) => {
+        const osc=ac.createOscillator(), g=ac.createGain();
+        osc.type='sine'; osc.frequency.setValueAtTime(freq,t+delay);
+        g.gain.setValueAtTime(0.25*v,t+delay); g.gain.exponentialRampToValueAtTime(0.001,t+delay+0.3);
+        osc.connect(g); g.connect(ac.destination); osc.start(t+delay); osc.stop(t+delay+0.3);
+      });
+    } else if (type === 'bossSpawn') {
+      const osc = ac.createOscillator(), g = ac.createGain();
+      osc.type='sine'; osc.frequency.setValueAtTime(60,t);
+      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.3*v,t+0.1); g.gain.exponentialRampToValueAtTime(0.001,t+0.4);
+      osc.connect(g); g.connect(ac.destination); osc.start(t); osc.stop(t+0.4);
+    }
+  } catch(e) {}
+}
+
 // ─── Camera ────────────────────────────────────────────────────────────────
 const cam = { x: WW/2 - VW/2, y: WH/2 - VH/2 };
 const shake = { x: 0, y: 0, timer: 0, mag: 0 };
@@ -165,10 +233,21 @@ function updateCamera(player, dt) {
   } else {
     shake.x = 0; shake.y = 0;
   }
+  // zoom pulse
+  if (camZoomTimer > 0) {
+    camZoomTimer -= dt;
+    if (camZoomTimer <= 0) camZoomTarget = 1.0;
+  }
+  camZoom += (camZoomTarget - camZoom) * Math.min(1, dt * 14);
 }
 
 function triggerShake(mag, duration) {
   shake.mag = mag; shake.timer = duration;
+}
+
+let camZoom = 1.0, camZoomTarget = 1.0, camZoomTimer = 0;
+function triggerZoomPulse() {
+  camZoomTarget = 1.03; camZoomTimer = 0.15;
 }
 
 // world->screen
@@ -180,13 +259,17 @@ const keys = {};
 const joystick = { active: false, dx: 0, dy: 0 };
 
 window.addEventListener('keydown', function(e) {
+  getAudioCtx();
   keys[e.code] = true;
   if (e.code === 'Space') { e.preventDefault(); tryAttack(); }
   if (e.code === 'KeyE') { e.preventDefault(); openShop(); }
 });
 window.addEventListener('keyup', function(e) { keys[e.code] = false; });
 
-canvas.addEventListener('mousedown', function(e) { if (e.button === 0) tryAttack(); });
+canvas.addEventListener('mousedown', function(e) {
+  getAudioCtx();
+  if (e.button === 0) tryAttack();
+});
 canvas.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
 // Touch joystick
@@ -195,6 +278,7 @@ const joystickThumb = document.getElementById('joystickThumb');
 let joyOrigin = null;
 
 joystickArea.addEventListener('touchstart', function(e) {
+  getAudioCtx();
   e.preventDefault();
   const r = joystickArea.getBoundingClientRect();
   joyOrigin = { x: r.left + r.width/2, y: r.top + r.height/2 };
@@ -218,6 +302,7 @@ joystickArea.addEventListener('touchend', function(e) {
 }, { passive: false });
 
 document.getElementById('attackBtn').addEventListener('touchstart', function(e) {
+  getAudioCtx();
   e.preventDefault(); tryAttack();
 }, { passive: false });
 
@@ -234,6 +319,10 @@ function initGameState() {
     coins: [], particles: [], dmgNums: [],
     shopOpen: false,
     attackSpeedLevel: 0,
+    killStreak: 0, comboTimer: 0,
+    comboTexts: [], sparkles: [], killFeed: [],
+    dtMult: 1.0, deathSlowTimer: 0,
+    hordeWave: false,
   };
   gs.player = {
     x: WW/2, y: WH/2,
@@ -245,6 +334,7 @@ function initGameState() {
     attackCooldown: 0, attackAnim: 0,
     invincible: 0,
     r: 16,
+    deathFlash: 0,
   };
   cam.x = WW/2 - VW/2;
   cam.y = WH/2 - VH/2;
@@ -255,7 +345,19 @@ initGameState();
 function drawPlayer(p) {
   const x = wx(p.x), y = wy(p.y);
   if (!isOnScreen(p.x, p.y, 40)) return;
-  if (p.invincible > 0 && Math.floor(p.invincible * 10) % 2 === 0) return;
+
+  // death flash
+  if (gs.state === 'dying') {
+    if (Math.floor(gs.deathSlowTimer * 15) % 2 === 0) {
+      ctx.save(); ctx.translate(wx(p.x), wy(p.y));
+      ctx.fillStyle = 'rgba(220,0,0,0.85)';
+      ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+      return;
+    }
+  } else {
+    if (p.invincible > 0 && Math.floor(p.invincible * 10) % 2 === 0) return;
+  }
 
   ctx.save();
   ctx.translate(x, y);
@@ -352,7 +454,7 @@ function drawOrc(o) {
   ctx.translate(x, y);
   ctx.scale(sc, sc);
 
-  if (flash) { ctx.filter = 'brightness(3) saturate(0)'; }
+  if (flash) { ctx.filter = 'brightness(5) saturate(0)'; }
 
   // rage particles
   if (rage && Math.random() < 0.3) {
@@ -907,6 +1009,139 @@ function drawParticles() {
   ctx.globalAlpha = 1;
 }
 
+// ─── Combo Texts ──────────────────────────────────────────────────────────
+function spawnComboText(x, y, text) {
+  gs.comboTexts.push({ x, y, text, life: 1.0, maxLife: 1.0, scale: 1.5 });
+}
+function updateComboTexts(dt) {
+  for (let i = gs.comboTexts.length-1; i>=0; i--) {
+    const c = gs.comboTexts[i];
+    c.y -= 30 * dt;
+    c.life -= dt;
+    c.scale = Math.max(1.0, c.scale - dt * 4);
+    if (c.life <= 0) gs.comboTexts.splice(i, 1);
+  }
+}
+function drawComboTexts() {
+  for (const c of gs.comboTexts) {
+    const alpha = Math.min(1, c.life * 2);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(wx(c.x), wy(c.y));
+    ctx.scale(c.scale, c.scale);
+    ctx.fillStyle = '#ffd700';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    ctx.font = 'bold 18px Georgia';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.strokeText(c.text, 0, 0);
+    ctx.fillText(c.text, 0, 0);
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ─── Sparkles ─────────────────────────────────────────────────────────────
+function spawnSparkles() {
+  for (let i = 0; i < 30; i++) {
+    gs.sparkles.push({
+      x: Math.random() * VW, y: Math.random() * VH,
+      life: 0.4 + Math.random() * 0.4, maxLife: 0.8,
+      r: 1 + Math.random() * 2,
+    });
+  }
+}
+function updateSparkles(dt) {
+  for (let i = gs.sparkles.length-1; i>=0; i--) {
+    gs.sparkles[i].life -= dt;
+    if (gs.sparkles[i].life <= 0) gs.sparkles.splice(i, 1);
+  }
+}
+function drawSparkles() {
+  for (const s of gs.sparkles) {
+    ctx.globalAlpha = s.life / s.maxLife;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ─── Kill Feed ────────────────────────────────────────────────────────────
+function addKillFeed(text) {
+  gs.killFeed.unshift({ text, timer: 2.0, x: VW + 10 });
+  if (gs.killFeed.length > 3) gs.killFeed.pop();
+}
+function updateKillFeed(dt) {
+  for (let i = gs.killFeed.length-1; i>=0; i--) {
+    const kf = gs.killFeed[i];
+    kf.timer -= dt;
+    kf.x += (VW - 14 - kf.x) * Math.min(1, dt * 12); // slide in
+    if (kf.timer <= 0) gs.killFeed.splice(i, 1);
+  }
+}
+function drawKillFeed() {
+  if (gs.shopOpen) return;
+  const startY = 100; // below minimap
+  ctx.font = 'bold 11px Georgia';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < gs.killFeed.length; i++) {
+    const kf = gs.killFeed[i];
+    const alpha = Math.min(1, kf.timer * 2);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    const tw = ctx.measureText(kf.text).width;
+    ctx.fillRect(kf.x - tw - 8, startY + i * 16 - 7, tw + 10, 14);
+    ctx.fillStyle = kf.text.includes('BOSS') ? '#ffd700' : '#ffaa44';
+    ctx.fillText(kf.text, kf.x, startY + i * 16);
+  }
+  ctx.globalAlpha = 1;
+  ctx.textAlign = 'left';
+}
+
+// ─── Minimap ──────────────────────────────────────────────────────────────
+function drawMinimap() {
+  if (gs.shopOpen) return;
+  const MW = 120, MH = 80;
+  const MX = VW - MW - 6, MY = 8;
+  // bg
+  ctx.save();
+  ctx.globalAlpha = 0.75;
+  ctx.fillStyle = '#111';
+  ctx.beginPath();
+  ctx.roundRect ? ctx.roundRect(MX, MY, MW, MH, 4) : ctx.rect(MX, MY, MW, MH);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  // world border
+  ctx.strokeStyle = '#444';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(MX, MY, MW, MH);
+  // map entities
+  function mmx(wx_) { return MX + (wx_ / WW) * MW; }
+  function mmy(wy_) { return MY + (wy_ / WH) * MH; }
+  // orcs
+  ctx.fillStyle = '#f44';
+  for (const o of gs.orcs) {
+    ctx.beginPath(); ctx.arc(mmx(o.x), mmy(o.y), o.boss ? 2.5 : 1.5, 0, Math.PI*2); ctx.fill();
+  }
+  // coins
+  ctx.fillStyle = '#ffd700';
+  for (const c of gs.coins) {
+    ctx.beginPath(); ctx.arc(mmx(c.x), mmy(c.y), 1, 0, Math.PI*2); ctx.fill();
+  }
+  // soldiers
+  ctx.fillStyle = '#44aaff';
+  for (const s of gs.soldiers) {
+    ctx.beginPath(); ctx.arc(mmx(s.x), mmy(s.y), 2, 0, Math.PI*2); ctx.fill();
+  }
+  // player
+  ctx.fillStyle = '#00ff88';
+  const p = gs.player;
+  ctx.beginPath(); ctx.arc(mmx(p.x), mmy(p.y), 3, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
 // ─── Coin ──────────────────────────────────────────────────────────────────
 function drawCoins() {
   for (const c of gs.coins) {
@@ -947,6 +1182,7 @@ function tryAttack() {
   if (p.attackCooldown > 0) return;
   p.attackCooldown = cooldown;
   p.attackAnim = 0.25;
+  playSound('swing'); triggerZoomPulse();
 
   // Attack range in facing direction
   const ax = p.x + Math.cos(p.angle) * 28;
@@ -963,11 +1199,13 @@ function tryAttack() {
       // Knockback
       const kdx = o.x - p.x, kdy = o.y - p.y;
       const klen = Math.sqrt(kdx*kdx + kdy*kdy) || 1;
-      o.kbVx = (kdx / klen) * 120;
-      o.kbVy = (kdy / klen) * 120;
-      o.kbTimer = 0.25;
+      o.kbVx = (kdx / klen) * 180;
+      o.kbVy = (kdy / klen) * 180;
+      o.kbTimer = 0.3;
       o.kbGrace = 0.15;
-      spawnParticles(o.x, o.y, '#44cc44', 5);
+      spawnParticles(o.x, o.y, '#44cc44', 4);
+      spawnParticles(o.x, o.y, '#998877', 4); // dust
+      playSound('orcHit');
       spawnDmgNum(o.x, o.y - o.r - 10, dmg, '#ff4');
 
       if (o.hp <= 0) {
@@ -982,8 +1220,16 @@ function tryAttack() {
 }
 
 function killOrc(o) {
-  const goldVal = o.boss ? 20 : (o.type === 'armoured' ? 8 : (o.type === 'goblin' ? 3 : 5));
+  const goldBase = o.boss ? 20 : (o.type === 'armoured' ? 8 : (o.type === 'goblin' ? 3 : 5));
   const xpVal = o.boss ? 50 : (o.type === 'armoured' ? 12 : 5);
+  // combo multiplier
+  gs.killStreak++;
+  gs.comboTimer = 2.5;
+  let comboMult = 1;
+  if (gs.killStreak >= 8) comboMult = 3;
+  else if (gs.killStreak >= 5) comboMult = 2;
+  else if (gs.killStreak >= 3) comboMult = 1.5;
+  const goldVal = Math.round(goldBase * comboMult);
   gs.gold += goldVal;
   waveGold += goldVal;
   gs.score += o.boss ? 200 : 50;
@@ -992,6 +1238,17 @@ function killOrc(o) {
   gs.coins.push({ x: o.x, y: o.y, r: 6, val: goldVal });
   spawnParticles(o.x, o.y, '#44cc44', 12);
   spawnDmgNum(o.x, o.y - 20, '+' + goldVal + 'g', '#ffd700');
+  playSound('orcDeath');
+  // kill feed
+  const feedText = (o.boss ? 'BOSS' : (o.type === 'goblin' ? 'Goblin' : (o.type === 'armoured' ? 'Armoured Orc' : (o.type === 'ranged' ? 'Ranged Orc' : 'Orc')))) + ' slain +' + goldVal + 'g';
+  addKillFeed(feedText);
+  // combo text
+  if (gs.killStreak >= 2) {
+    spawnComboText(gs.player.x, gs.player.y - 40, 'x' + gs.killStreak + ' COMBO!');
+  }
+  if (gs.killStreak === 3) showAnnounce('TRIPLE KILL!');
+  else if (gs.killStreak === 6) showAnnounce('RAMPAGE!');
+  else if (gs.killStreak === 10) showAnnounce('UNSTOPPABLE!');
   checkLevelUp();
   updateHUD();
 }
@@ -1006,30 +1263,38 @@ function checkLevelUp() {
     p.maxHp += 15;
     p.hp = Math.min(p.hp + 20, p.maxHp);
     showAnnounce('LEVEL UP! Lv ' + p.level);
+    playSound('levelUp');
   }
 }
 
 // ─── Orc AI ────────────────────────────────────────────────────────────────
-function spawnOrc() {
+function spawnOrc(forceBoss) {
   const edge = Math.floor(Math.random() * 4);
   let x, y;
   const inner = 60;
-  if (edge === 0) { x = WALL + inner + Math.random()*(WW - (WALL+inner)*2); y = WALL + inner; }
-  else if (edge === 1) { x = WALL + inner + Math.random()*(WW - (WALL+inner)*2); y = WH - WALL - inner; }
-  else if (edge === 2) { x = WALL + inner; y = WALL + inner + Math.random()*(WH - (WALL+inner)*2); }
-  else { x = WW - WALL - inner; y = WALL + inner + Math.random()*(WH - (WALL+inner)*2); }
+  if (edge === 0)      { x = WALL+inner+Math.random()*(WW-(WALL+inner)*2); y = WALL+inner; }
+  else if (edge === 1) { x = WALL+inner+Math.random()*(WW-(WALL+inner)*2); y = WH-WALL-inner; }
+  else if (edge === 2) { x = WALL+inner; y = WALL+inner+Math.random()*(WH-(WALL+inner)*2); }
+  else                 { x = WW-WALL-inner; y = WALL+inner+Math.random()*(WH-(WALL+inner)*2); }
 
   const wave = gs.wave;
   let type = 'grunt';
   const rand = Math.random();
-  if (wave >= 12 && rand < 0.18) type = 'ranged';
-  else if (wave >= 8 && rand < 0.30) type = 'armoured';
-  else if (wave >= 3 && rand < 0.35) type = 'goblin';
+  // Progressive difficulty
+  if (wave >= 16 && rand < 0.18)      type = 'ranged';
+  else if (wave >= 11 && rand < 0.28) type = 'armoured';
+  else if (wave >= 6  && rand < 0.35) type = 'goblin';
+  // wave 1-5: grunts only
+  if (wave <= 5) type = 'grunt';
 
-  const boss = (wave % 5 === 0) && Math.random() < 0.08 && wave > 0;
+  // Boss logic
+  let boss = false;
+  if (forceBoss) {
+    boss = true;
+  }
 
-  const baseHp = boss ? 300 : (type === 'armoured' ? 80 : (type === 'goblin' ? 25 : 40));
-  const baseSpd = boss ? 55 : (type === 'goblin' ? 210 : (type === 'armoured' ? 90 : 130));
+  const baseHp  = boss ? 300 : (type === 'armoured' ? 80 : (type === 'goblin' ? 25 : 40));
+  const baseSpd = boss ? 55  : (type === 'goblin' ? 210 : (type === 'armoured' ? 90 : 130));
   const hpScale = 1 + wave * 0.12;
 
   const o = {
@@ -1043,8 +1308,14 @@ function spawnOrc() {
     hitFlash: 0,
     kbVx: 0, kbVy: 0, kbTimer: 0, kbGrace: 0,
     rangedTimer: 2 + Math.random() * 1.5,
+    wobbleAngle: 0, wobbleTimer: 0,
+    zigzagTimer: 0, zigzagOffset: 0,
   };
   gs.orcs.push(o);
+  if (boss) {
+    playSound('bossSpawn');
+    showAnnounce('BOSS INCOMING!');
+  }
 }
 
 function updateOrcs(dt) {
@@ -1107,12 +1378,30 @@ function updateOrcs(dt) {
           o.rangedTimer = 2.5;
         }
       } else {
-        // Melee: move toward target
-        const dx = target.x - o.x, dy = target.y - o.y;
+        // Melee: move toward target with wobble
+        let dx = target.x - o.x, dy = target.y - o.y;
         const d = Math.sqrt(dx*dx + dy*dy);
         if (d > 1) {
-          o.x += (dx/d) * o.speed * dt;
-          o.y += (dy/d) * o.speed * dt;
+          // Update wobble every 0.5s
+          o.wobbleTimer -= dt;
+          if (o.wobbleTimer <= 0) {
+            o.wobbleTimer = 0.5;
+            o.wobbleAngle = (Math.random() - 0.5) * (Math.PI / 6); // ±15 deg
+          }
+          let moveAngle = Math.atan2(dy, dx) + o.wobbleAngle;
+          // Goblin zigzag
+          if (o.type === 'goblin') {
+            o.zigzagTimer -= dt;
+            if (o.zigzagTimer <= 0) {
+              o.zigzagTimer = 0.3;
+              o.zigzagOffset = (Math.random() < 0.5 ? 1 : -1) * (Math.PI / 5);
+            }
+            moveAngle += o.zigzagOffset;
+          }
+          // Near-death desperation speed
+          const desperation = (o.hp < o.maxHp * 0.2) ? 1.2 : 1.0;
+          o.x += Math.cos(moveAngle) * o.speed * desperation * dt;
+          o.y += Math.sin(moveAngle) * o.speed * desperation * dt;
         }
       }
     }
@@ -1183,9 +1472,14 @@ function damagePlayer(dmg) {
   triggerShake(6, 0.4);
   spawnParticles(p.x, p.y, '#ff4444', 8);
   spawnDmgNum(p.x, p.y - p.r - 10, '-' + dmg, '#f44');
+  playSound('playerHurt');
   if (p.hp <= 0) {
     p.hp = 0;
-    gameOver();
+    gs.state = 'dying';
+    gs.dtMult = 0.15;
+    gs.deathSlowTimer = 1.2;
+    playSound('playerHurt', 2.0);
+    triggerShake(10, 1.2);
   }
   updateHUD();
 }
@@ -1239,6 +1533,7 @@ function regroupSoldiers() {
 
 // ─── Wave System ───────────────────────────────────────────────────────────
 let spawnTimer = 0, spawnInterval = 2.0, orcsThisWave = 0, orcsSpawned = 0;
+let bossesThisWave = 0, bossesSpawned = 0;
 let waveState = 'idle'; // idle | spawning | complete
 
 function startWave() {
@@ -1246,15 +1541,19 @@ function startWave() {
   document.getElementById('waveVal').textContent = gs.wave;
   waveKills = 0; waveGold = 0;
 
-  orcsThisWave = 4 + gs.wave * 2 + (gs.wave > 5 ? gs.wave : 0);
-  if (gs.wave % 5 === 0) orcsThisWave = Math.round(orcsThisWave * 0.7); // boss wave fewer orcs
-  orcsSpawned = 0;
+  let baseCount = 4 + gs.wave * 2 + (gs.wave > 5 ? gs.wave : 0);
+  gs.hordeWave = (gs.wave === 25);
+  if (gs.hordeWave) { baseCount *= 2; showAnnounce('HORDE WAVE!!'); }
+  if (gs.wave % 5 === 0) baseCount = Math.round(baseCount * 0.7);
+  orcsThisWave = baseCount;
+  bossesThisWave = 0;
+  if (gs.wave % 5 === 0) bossesThisWave = gs.wave >= 40 ? 2 : 1;
+  orcsSpawned = 0; bossesSpawned = 0;
   spawnTimer = 0;
-  spawnInterval = Math.max(0.6, 2.0 - gs.wave * 0.04);
+  spawnInterval = 0.15; // stagger 0.15s apart
   waveState = 'spawning';
   gs.shopOpen = false;
   document.getElementById('shopOverlay').style.display = 'none';
-
   showAnnounce('WAVE ' + gs.wave);
 }
 
@@ -1274,16 +1573,16 @@ function updateWave(dt) {
   if (waveState !== 'spawning') return;
   spawnTimer -= dt;
   if (spawnTimer <= 0 && orcsSpawned < orcsThisWave) {
-    spawnOrc();
+    spawnOrc(false);
     orcsSpawned++;
-    spawnTimer = spawnInterval;
-    // Boss wave: spawn boss orc
-    if (gs.wave % 5 === 0 && orcsSpawned === Math.floor(orcsThisWave / 2)) {
-      const bossOrc = gs.orcs[gs.orcs.length - 1];
-      if (bossOrc) bossOrc.boss = true;
-    }
+    spawnTimer = 0.15;
   }
-  if (orcsSpawned >= orcsThisWave && gs.orcs.length === 0) {
+  // Spawn boss at midpoint
+  if (bossesThisWave > 0 && bossesSpawned < bossesThisWave && orcsSpawned >= Math.floor(orcsThisWave / 2)) {
+    spawnOrc(true);
+    bossesSpawned++;
+  }
+  if (orcsSpawned >= orcsThisWave && bossesSpawned >= bossesThisWave && gs.orcs.length === 0) {
     waveState = 'complete';
     showWaveCard();
   }
@@ -1297,6 +1596,19 @@ function showWaveCard() {
   document.getElementById('wcStats').textContent = 'Kills: ' + waveKills + '   Gold earned: ' + waveGold + 'g';
   card.style.display = 'flex';
   waveCardTimer = 2.5;
+  playSound('waveComplete'); spawnSparkles();
+  // gold burst sparkle
+  for (let i = 0; i < 20; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const spd = 80 + Math.random() * 120;
+    gs.particles.push({
+      x: gs.player.x + (Math.random()-0.5)*100,
+      y: gs.player.y + (Math.random()-0.5)*100,
+      vx: Math.cos(a)*spd, vy: Math.sin(a)*spd,
+      r: 3 + Math.random()*3, color: '#ffd700',
+      life: 0.6+Math.random()*0.4, maxLife: 1.0,
+    });
+  }
 }
 
 function updateWaveCard(dt) {
@@ -1321,6 +1633,7 @@ function updateCoins(dt) {
     if (dist(c, p) < c.r + p.r + 14) {
       gs.gold += c.val; // already added at kill, this is for visual pop
       spawnParticles(c.x, c.y, '#ffd700', 3);
+      playSound('coin');
       gs.coins.splice(i, 1);
       updateHUD();
     }
@@ -1361,23 +1674,43 @@ function openShop() {
       disabled: gs.soldiers.length >= 3, disabledReason: 'Max 3' },
   ];
 
+  const descs = {
+    heal: 'Restore 50 HP instantly',
+    maxhp: 'Increase maximum health permanently',
+    damage: 'Your sword strikes harder',
+    speed: 'Move faster across the battlefield',
+    atkspd: 'Reduce swing cooldown',
+    soldier: 'Ally who fights alongside you',
+  };
+
   const cont = document.getElementById('shopItems');
   cont.innerHTML = '';
   for (const item of items) {
     const canAfford = gs.gold >= item.cost;
     const isDisabled = item.disabled || !canAfford;
     const div = document.createElement('div');
-    div.className = 'shopItem';
     const reason = item.disabled ? item.disabledReason : (!canAfford ? 'Need ' + item.cost + 'g' : '');
+    div.className = 'shopItem' + (!item.disabled && canAfford ? ' can-afford' : '');
     div.innerHTML = `
-      <span class="itemName">${item.name}${reason ? ' <span style="color:#888;font-size:11px">(${reason})</span>' : ''}</span>
+      <div class="itemInfo">
+        <div class="itemName">${item.name}${reason ? ' <span style="color:#888;font-size:11px">(${reason})</span>' : ''}</div>
+        <div class="itemDesc">${descs[item.key] || ''}</div>
+      </div>
       <span class="itemCost">${item.cost}g</span>
       <button ${isDisabled ? 'disabled' : ''} onclick="buyItem('${item.key}', ${item.cost})">Buy</button>
     `;
     cont.appendChild(div);
   }
 
-  document.getElementById('shopOverlay').style.display = 'block';
+  const shopEl = document.getElementById('shopOverlay');
+  shopEl.style.display = 'block';
+  shopEl.style.transform = 'translate(-50%,-50%) scale(0.8)';
+  shopEl.style.opacity = '0';
+  requestAnimationFrame(() => {
+    shopEl.style.transition = 'transform 0.18s cubic-bezier(.22,.68,0,1.2), opacity 0.18s';
+    shopEl.style.transform = 'translate(-50%,-50%) scale(1.0)';
+    shopEl.style.opacity = '1';
+  });
 }
 
 function closeShop() {
@@ -1450,8 +1783,29 @@ function winGame() {
 let lastTime = 0;
 
 function update(dt) {
+  // Death animation
+  if (gs.state === 'dying') {
+    gs.deathSlowTimer -= dt;
+    // slow camera zoom in on player
+    camZoomTarget = Math.min(1.5, camZoomTarget + dt * 0.2);
+    if (gs.deathSlowTimer <= 0) {
+      gs.dtMult = 1.0;
+      camZoomTarget = 1.0;
+      gameOver();
+      return;
+    }
+    // still update some things during death
+    updateCamera(gs.player, dt);
+    updateParticles(dt * gs.dtMult);
+    updateComboTexts(dt);
+    updateSparkles(dt);
+    updateKillFeed(dt);
+    return;
+  }
+
   if (gs.state !== 'playing') return;
   const p = gs.player;
+  const adt = dt * gs.dtMult;
 
   // Movement
   let mx = 0, my = 0;
@@ -1463,23 +1817,32 @@ function update(dt) {
 
   const len = Math.sqrt(mx*mx + my*my);
   if (len > 0) {
-    p.x += (mx/len) * p.speed * dt;
-    p.y += (my/len) * p.speed * dt;
+    p.x += (mx/len) * p.speed * adt;
+    p.y += (my/len) * p.speed * adt;
     p.angle = Math.atan2(my, mx);
   }
   clampPlayer(p);
 
-  p.attackCooldown = Math.max(0, p.attackCooldown - dt);
-  p.attackAnim = Math.max(0, p.attackAnim - dt * 4);
-  p.invincible = Math.max(0, p.invincible - dt);
+  p.attackCooldown = Math.max(0, p.attackCooldown - adt);
+  p.attackAnim = Math.max(0, p.attackAnim - adt * 4);
+  p.invincible = Math.max(0, p.invincible - adt);
+
+  // Combo timer countdown
+  if (gs.comboTimer > 0) {
+    gs.comboTimer -= dt;
+    if (gs.comboTimer <= 0) gs.killStreak = 0;
+  }
 
   updateCamera(p, dt);
-  updateOrcs(dt);
-  updateProjectiles(dt);
-  updateSoldiers(dt);
-  updateCoins(dt);
-  updateParticles(dt);
-  updateWave(dt);
+  updateOrcs(adt);
+  updateProjectiles(adt);
+  updateSoldiers(adt);
+  updateCoins(adt);
+  updateParticles(adt);
+  updateComboTexts(dt);
+  updateSparkles(dt);
+  updateKillFeed(dt);
+  updateWave(adt);
   updateWaveCard(dt);
   updateHUD();
 }
@@ -1492,6 +1855,13 @@ function draw() {
     ctx.fillStyle = '#2a2015';
     ctx.fillRect(0, 0, VW, VH);
     return;
+  }
+
+  ctx.save();
+  if (camZoom !== 1.0) {
+    ctx.translate(VW/2, VH/2);
+    ctx.scale(camZoom, camZoom);
+    ctx.translate(-VW/2, -VH/2);
   }
 
   drawWorld();
@@ -1514,6 +1884,9 @@ function draw() {
   // Draw particles + damage numbers
   drawParticles();
 
+  // Combo texts and sparkles
+  drawComboTexts(); drawSparkles();
+
   // Attack range indicator (faint)
   if (gs.player.attackAnim > 0) {
     const p = gs.player;
@@ -1525,6 +1898,11 @@ function draw() {
     ctx.stroke();
     ctx.globalAlpha = 1;
   }
+
+  ctx.restore();
+
+  // Minimap and kill feed (outside zoom transform)
+  drawMinimap(); drawKillFeed();
 }
 
 // ─── Game Loop ─────────────────────────────────────────────────────────────
