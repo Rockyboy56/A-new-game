@@ -69,6 +69,20 @@ canvas { display: block; }
 #waveCard .wc-progress-bar { height: 100%; background: linear-gradient(90deg,#c96,#ffd700); border-radius: 8px; transition: width 0.5s; }
 #waveCard .wc-wave-label { font-size: 13px; color: #888; margin-top: 4px; }
 #waveCard .wc-desc { font-size: 15px; color: #ffcc66; margin-top: 6px; font-style: italic; }
+#levelUpOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.88); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 300; }
+#levelUpOverlay h2 { color: #ffd700; font-size: 34px; margin-bottom: 6px; text-shadow: 0 0 22px #f80, 2px 2px 6px #000; }
+#levelUpOverlay .lu-sub { color: #ccc; font-size: 14px; margin-bottom: 24px; }
+#luCards { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+.luCard { background: rgba(10,8,2,0.96); border: 2px solid #c8a020; border-radius: 14px; padding: 22px 18px; width: 148px; cursor: pointer; text-align: center; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
+.luCard:hover { border-color: #ffd700; box-shadow: 0 0 22px rgba(255,215,0,0.55); transform: scale(1.06); }
+.luCard .lu-icon { font-size: 30px; margin-bottom: 8px; }
+.luCard .lu-name { color: #ffd700; font-size: 13px; font-weight: bold; margin-bottom: 5px; }
+.luCard .lu-desc { color: #999; font-size: 10px; line-height: 1.45; }
+#buffBar { display: flex; gap: 5px; margin-top: 3px; flex-wrap: wrap; min-height: 4px; }
+.buffPill { background: rgba(20,20,60,0.85); border: 1px solid #445588; border-radius: 10px; padding: 2px 7px; font-size: 10px; color: #aaccff; }
+.buffPill.fading { opacity: 0.35; }
+#whirlwindBtnTouch { position: absolute; bottom: 105px; right: 18px; width: 56px; height: 56px; border-radius: 50%; background: rgba(40,80,200,0.6); border: 3px solid rgba(120,160,255,0.9); color: #fff; font-size: 10px; font-weight: bold; display: none; align-items: center; justify-content: center; pointer-events: all; cursor: pointer; touch-action: none; user-select: none; flex-direction: column; opacity: 0.7; }
+#whirlwindBtnTouch.locked { opacity: 0.3; }
 </style>
 </head>
 <body>
@@ -96,6 +110,7 @@ canvas { display: block; }
           </div>
           <span id="levelLabel">Lv 1</span>
         </div>
+        <div id="buffBar"></div>
       </div>
       <div id="rightHud">
         <span id="goldDisplay">★ 0</span>
@@ -121,15 +136,16 @@ canvas { display: block; }
     <div id="soldierPortraits" style="position:absolute;bottom:52px;left:10px;display:flex;gap:4px;pointer-events:none;"></div>
   </div>
   <div id="overlay">
-    <h1>&#9876; KNIGHT ORC ASSAULT</h1>
-    <div class="subtitle">Defend the village across 50 waves of orcs!</div>
+    <h1 style="font-size:46px;letter-spacing:2px;">&#9876; KNIGHT ORC ASSAULT</h1>
+    <div class="subtitle">Defend the Kingdom &mdash; Survive 50 Waves</div>
     <div id="menuHighScore" style="color:#ffd700;font-size:13px;margin-bottom:8px;">Loading...</div>
     <div class="controls-hint">
       WASD / Arrow Keys: Move &nbsp;|&nbsp; Click / Space: Attack<br>
       E: Shop &nbsp;|&nbsp; B: Area Bomb &nbsp;|&nbsp; P/Esc: Pause<br>
       Kill orcs to earn gold — use SHOP between waves
     </div>
-    <button onclick="startGame()">&#9658; START GAME</button>
+    <div id="menuHighScore" style="color:#aaa;font-size:13px;margin-bottom:14px;"></div>
+    <button onclick="startGame()" style="font-size:22px;padding:14px 38px;letter-spacing:1px;">&#9658; PLAY</button>
   </div>
   <div id="shopOverlay">
     <h2>&#9876; SHOP</h2>
@@ -138,12 +154,18 @@ canvas { display: block; }
     <div id="shopItems"></div>
     <button id="shopClose" onclick="closeShop()">Continue to Next Wave &#8594;</button>
   </div>
+  <div id="levelUpOverlay">
+    <h2>&#11014; LEVEL UP!</h2>
+    <div class="lu-sub">Choose a stat to upgrade</div>
+    <div id="luCards"></div>
+  </div>
   <div id="touchControls">
     <div id="joystickArea"><div id="joystickThumb"></div></div>
     <div id="attackBtn">⚔</div>
     <div id="shopMobileBtnTouch" ontouchstart="event.preventDefault();openShop()">🛒</div>
     <div id="regroupBtnTouch" ontouchstart="event.preventDefault();regroupSoldiers()">⚑</div>
     <button id="shopMobileBtn" onclick="openShop()">SHOP</button>
+    <div id="whirlwindBtnTouch" class="locked" ontouchstart="event.preventDefault();tryWhirlwind()">&#x1F300;<br>SPIN</div>
   </div>
 </div>
 
@@ -382,6 +404,12 @@ function initGameState() {
     screenFlash: 0,
     waveStartTime: 0,
     soldierHireCount: 0,
+    timedBuffs: [],
+    whirlwindCooldown: 0,
+    whirlwindTimer: 0,
+    levelUpPending: false,
+    totalOrcsKilled: 0,
+    playTime: 0,
   };
   gs.player = {
     x: WW/2, y: WH/2,
@@ -394,6 +422,8 @@ function initGameState() {
     invincible: 0,
     r: 16,
     deathFlash: 0,
+    damageReduction: 0,
+    attackRange: 52,
   };
   cam.x = WW/2 - VW/2;
   cam.y = WH/2 - VH/2;
@@ -520,8 +550,8 @@ function drawOrc(o) {
     // just darken
   }
 
-  const headColor = o.boss ? '#1a7a1a' : (o.type === 'goblin' ? '#55ee55' : (o.type === 'armoured' ? '#5588aa' : '#44cc44'));
-  const bodyColor = o.boss ? '#145a14' : (o.type === 'armoured' ? '#3a6688' : '#2a8a2a');
+  const headColor = o.boss ? '#1a7a1a' : (o.type === 'shaman' ? '#7744cc' : (o.type === 'goblin' ? '#55ee55' : (o.type === 'armoured' ? '#5588aa' : '#44cc44')));
+  const bodyColor = o.boss ? '#145a14' : (o.type === 'shaman' ? '#5522aa' : (o.type === 'armoured' ? '#3a6688' : '#2a8a2a'));
 
   // --- body outline
   ctx.fillStyle = '#1a1a1a';
@@ -591,6 +621,16 @@ function drawOrc(o) {
   ctx.fillRect(-5, 2, 3, 6);
   ctx.fillRect(3, 2, 3, 6);
 
+  // Shaman robe
+  if (o.type === 'shaman') {
+    ctx.fillStyle = '#6633aa';
+    ctx.beginPath(); ctx.ellipse(0, 10, 10, 15, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#8844cc';
+    ctx.beginPath(); ctx.ellipse(0, 10, 8, 13, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#5a3a0a'; ctx.fillRect(12, -28, 4, 46);
+    ctx.fillStyle = '#88aaff'; ctx.beginPath(); ctx.arc(14, -28, 5, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#aaccff'; ctx.beginPath(); ctx.arc(14, -28, 3, 0, Math.PI*2); ctx.fill();
+  }
   // weapon
   if (o.type === 'ranged') {
     // rock
@@ -630,7 +670,7 @@ function drawOrc(o) {
     const bx = wx(o.x) - bw/2, by = wy(o.y) - (15 * sc + 6);
     ctx.fillStyle = '#400';
     ctx.fillRect(bx, by, bw, bh);
-    ctx.fillStyle = '#f44';
+    ctx.fillStyle = o.type === 'shaman' ? '#aa44ff' : '#f44';
     ctx.fillRect(bx, by, bw * (o.hp / o.maxHp), bh);
   } else {
     const bw = 60;
@@ -745,9 +785,14 @@ function drawProjectile(p) {
 
 // ─── Drawing: World Environment ───────────────────────────────────────────
 function drawWorld() {
-  // Ground base
-  ctx.fillStyle = '#c8a870';
-  ctx.fillRect(wx(0), wy(0), WW, WH);
+  // Ground with perspective tilt
+  const grd = ctx.createLinearGradient(0, wy(0), 0, wy(WH));
+  grd.addColorStop(0, '#9e7a48'); grd.addColorStop(0.5, '#c8a870'); grd.addColorStop(1, '#d8bc84');
+  ctx.fillStyle = grd; ctx.fillRect(wx(0), wy(0), WW, WH);
+  // 64px tile grid
+  ctx.strokeStyle = 'rgba(0,0,0,0.05)'; ctx.lineWidth = 1;
+  for (let gx = 0; gx < WW; gx += 64) { ctx.beginPath(); ctx.moveTo(wx(gx), wy(0)); ctx.lineTo(wx(gx), wy(WH)); ctx.stroke(); }
+  for (let gy = 0; gy < WH; gy += 64) { ctx.beginPath(); ctx.moveTo(wx(0), wy(gy)); ctx.lineTo(wx(WW), wy(gy)); ctx.stroke(); }
 
   // Darker ground near walls
   ctx.fillStyle = '#a07848';
@@ -855,6 +900,18 @@ function drawCastle() {
   ctx.closePath();
   ctx.fill();
 
+  // Gate arch at tower base
+  ctx.fillStyle = '#222';
+  ctx.beginPath();
+  ctx.arc(wx(cx+31), wy(360), 14, Math.PI, 0);
+  ctx.lineTo(wx(cx+45), wy(386)); ctx.lineTo(wx(cx+17), wy(386)); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#444'; ctx.lineWidth = 2;
+  for (let gi = 0; gi < 3; gi++) { ctx.beginPath(); ctx.moveTo(wx(cx+17+gi*9), wy(360)); ctx.lineTo(wx(cx+17+gi*9), wy(386)); ctx.stroke(); }
+  ctx.beginPath(); ctx.moveTo(wx(cx+17), wy(370)); ctx.lineTo(wx(cx+45), wy(370)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(wx(cx+17), wy(378)); ctx.lineTo(wx(cx+45), wy(378)); ctx.stroke();
+  // Well
+  drawWell(380, 540);
+
   // Rubble
   ctx.fillStyle = '#888';
   const rubble = [[cx+70,370],[cx+60,385],[cx+80,390],[cx+55,400],[cx+75,410],[cx+65,420]];
@@ -897,11 +954,33 @@ function drawVillage() {
   ctx.beginPath(); ctx.ellipse(wx(vx+115), wy(415), 12, 16, 0, 0, Math.PI*2); ctx.fill();
   ctx.strokeStyle = '#5a3010';
   ctx.lineWidth = 2;
-  for (let bi = -1; bi <= 1; bi++) {
-    ctx.beginPath();
-    ctx.ellipse(wx(vx+115), wy(415 + bi*9), 12, 4, 0, 0, Math.PI*2);
-    ctx.stroke();
-  }
+  for (let bi = -1; bi <= 1; bi++) { ctx.beginPath(); ctx.ellipse(wx(vx+115), wy(415 + bi*9), 12, 4, 0, 0, Math.PI*2); ctx.stroke(); }
+  drawHaystack(vx - 30, 500); drawHaystack(vx + 260, 580);
+  drawMarketStall(vx - 80, 600);
+}
+
+function drawHaystack(hx, hy) {
+  if (!isOnScreen(hx, hy, 50)) return;
+  ctx.fillStyle = '#aa8820'; ctx.beginPath(); ctx.ellipse(wx(hx), wy(hy), 28, 14, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#cc9f2a'; ctx.beginPath(); ctx.ellipse(wx(hx), wy(hy-4), 22, 10, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#ddbb40'; ctx.beginPath(); ctx.ellipse(wx(hx), wy(hy-7), 14, 6, 0, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#886600'; ctx.lineWidth = 1;
+  for (let hi = -3; hi <= 3; hi++) { ctx.beginPath(); ctx.moveTo(wx(hx+hi*4-2), wy(hy-14)); ctx.lineTo(wx(hx+hi*4+2), wy(hy+4)); ctx.stroke(); }
+}
+
+function drawMarketStall(sx, sy) {
+  if (!isOnScreen(sx, sy, 80)) return;
+  ctx.fillStyle = '#8b5520'; ctx.fillRect(wx(sx), wy(sy+10), 70, 8);
+  ctx.strokeStyle = '#5a3010'; ctx.lineWidth = 1; ctx.strokeRect(wx(sx), wy(sy+10), 70, 8);
+  ctx.fillStyle = '#6a4010'; ctx.fillRect(wx(sx+4), wy(sy+18), 5, 16); ctx.fillRect(wx(sx+61), wy(sy+18), 5, 16);
+  ctx.fillStyle = '#cc3333';
+  ctx.beginPath(); ctx.moveTo(wx(sx-8), wy(sy+10)); ctx.lineTo(wx(sx+35), wy(sy-20)); ctx.lineTo(wx(sx+78), wy(sy+10)); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#992222'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(wx(sx+10), wy(sy+5)); ctx.lineTo(wx(sx+35), wy(sy-16)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(wx(sx+60), wy(sy+5)); ctx.lineTo(wx(sx+35), wy(sy-16)); ctx.stroke();
+  ctx.fillStyle = '#aa4400'; ctx.beginPath(); ctx.arc(wx(sx+20), wy(sy+6), 5, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#cc8800'; ctx.beginPath(); ctx.arc(wx(sx+45), wy(sy+6), 5, 0, Math.PI*2); ctx.fill();
 }
 
 function drawHouse(hx, hy, hw, hh) {
@@ -956,6 +1035,26 @@ function drawHouse(hx, hy, hw, hh) {
   ctx.beginPath(); ctx.arc(wx(hx + hw*0.6 + dw*0.75), wy(hy + hh - dh*0.5), 2, 0, Math.PI*2); ctx.fill();
 }
 
+
+function drawWell(wx_, wy_) {
+  if (!isOnScreen(wx_, wy_, 60)) return;
+  ctx.fillStyle = '#888';
+  ctx.beginPath(); ctx.ellipse(wx(wx_), wy(wy_+10), 20, 12, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#999';
+  ctx.beginPath(); ctx.ellipse(wx(wx_), wy(wy_+10), 18, 10, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#333';
+  ctx.beginPath(); ctx.ellipse(wx(wx_), wy(wy_+10), 10, 6, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#888'; ctx.fillRect(wx(wx_-18), wy(wy_-2), 36, 14);
+  ctx.strokeStyle = '#777'; ctx.lineWidth = 1; ctx.strokeRect(wx(wx_-18), wy(wy_-2), 36, 14);
+  ctx.strokeStyle = '#999';
+  ctx.beginPath(); ctx.moveTo(wx(wx_-18), wy(wy_+4)); ctx.lineTo(wx(wx_+18), wy(wy_+4)); ctx.stroke();
+  ctx.fillStyle = '#7a5020'; ctx.fillRect(wx(wx_-16), wy(wy_-18), 5, 18); ctx.fillRect(wx(wx_+11), wy(wy_-18), 5, 18);
+  ctx.fillStyle = '#7a3a08';
+  ctx.beginPath(); ctx.moveTo(wx(wx_-20), wy(wy_-18)); ctx.lineTo(wx(wx_), wy(wy_-32)); ctx.lineTo(wx(wx_+20), wy(wy_-18)); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#8b5020'; ctx.fillRect(wx(wx_-13), wy(wy_-10), 26, 4);
+  ctx.strokeStyle = '#555';
+  ctx.beginPath(); ctx.moveTo(wx(wx_), wy(wy_-8)); ctx.lineTo(wx(wx_), wy(wy_+4)); ctx.stroke();
+}
 function drawTrees() {
   const treePositions = [
     [200,150],[350,120],[500,180],[1100,160],[1250,130],[1400,180],
@@ -1327,6 +1426,35 @@ function clampPlayer(p) {
   p.y = Math.max(minY, Math.min(maxY, p.y));
 }
 
+
+// ─── Whirlwind ───────────────────────────────────────────────────────────────
+function tryWhirlwind() {
+  if (gs.state !== 'playing') return;
+  const p = gs.player;
+  if (p.level < 5) { showAnnounce('Reach Level 5!'); return; }
+  if ((gs.whirlwindCooldown||0) > 0) { showAnnounce('Whirlwind: ' + Math.ceil(gs.whirlwindCooldown) + 's'); return; }
+  gs.whirlwindCooldown = 8.0;
+  gs.whirlwindTimer = 0.5;
+  playSound('battlecry', 1.2);
+  triggerShake(6, 0.4);
+  spawnSparkles();
+  const range = 100;
+  for (const o of gs.orcs) {
+    if (o.killed) continue;
+    if (dist(o, p) < range + o.r) {
+      const dmg = Math.round(p.damage * 1.5);
+      o.hp -= dmg;
+      const kdx = o.x - p.x, kdy = o.y - p.y;
+      const kl = Math.sqrt(kdx*kdx + kdy*kdy) || 1;
+      o.kbVx = (kdx/kl) * 380; o.kbVy = (kdy/kl) * 380;
+      o.kbTimer = 0.5; o.kbGrace = 0.25;
+      spawnParticles(o.x, o.y, '#88aaff', 8);
+      spawnDmgNum(o.x, o.y - o.r - 10, dmg, '#88aaff');
+      o.hitFlash = 0.2;
+      if (o.hp <= 0 && !o.killed) { o.killed = true; killOrc(o); }
+    }
+  }
+}
 // ─── Attack ────────────────────────────────────────────────────────────────
 function tryAttack() {
   if (gs.state !== 'playing') return;
@@ -1340,9 +1468,10 @@ function tryAttack() {
   // Attack range in facing direction
   const ax = p.x + Math.cos(p.angle) * 28;
   const ay = p.y + Math.sin(p.angle) * 28;
-  const range = 52;
+  const range = p.attackRange || 52;
 
   for (const o of gs.orcs) {
+    if (o.killed) continue;
     const d = dist({ x: ax, y: ay }, o);
     if (d < range + o.r) {
       let dmg = p.damage;
@@ -1361,9 +1490,7 @@ function tryAttack() {
       playSound('orcHit');
       spawnDmgNum(o.x, o.y - o.r - 10, dmg, '#ff4');
 
-      if (o.hp <= 0) {
-        killOrc(o);
-      }
+      if (o.hp <= 0 && !o.killed) { o.killed = true; killOrc(o); }
     }
   }
 
@@ -1373,8 +1500,8 @@ function tryAttack() {
 }
 
 function killOrc(o) {
-  const goldBase = o.boss ? 20 : (o.type === 'armoured' ? 8 : (o.type === 'goblin' ? 3 : 5));
-  const xpVal = o.boss ? 50 : (o.type === 'armoured' ? 12 : 5);
+  const goldBase = o.boss ? 20 : (o.type === 'shaman' ? 15 : (o.type === 'armoured' ? 8 : (o.type === 'goblin' ? 3 : 5)));
+  const xpVal = o.boss ? 50 : (o.type === 'shaman' ? 30 : (o.type === 'armoured' ? 12 : 5));
   // combo multiplier
   gs.killStreak++;
   gs.comboTimer = 2.5;
@@ -1385,8 +1512,9 @@ function killOrc(o) {
   const goldVal = Math.round(goldBase * comboMult);
   gs.gold += goldVal;
   waveGold += goldVal;
-  gs.score += o.boss ? 200 : 50;
+  gs.score += o.boss ? 200 : (o.type === 'shaman' ? 150 : 50);
   waveKills++;
+  gs.totalOrcsKilled++;
   gs.player.xp += xpVal;
   gs.coins.push({ x: o.x, y: o.y, r: 6, val: goldVal });
   spawnBloodDeath(o.x, o.y);
@@ -1407,18 +1535,52 @@ function killOrc(o) {
   updateHUD();
 }
 
+const ALL_UPGRADES = [
+  { icon: '⚔', name: '+15 Damage', desc: 'Strikes hit harder', apply: p => { p.damage += 15; } },
+  { icon: '❤', name: '+30 Max HP', desc: 'Gain max HP and heal 30', apply: p => { p.maxHp += 30; p.hp = Math.min(p.maxHp, p.hp + 30); } },
+  { icon: '💟', name: '+20 Speed', desc: 'Move faster in battle', apply: p => { p.speed += 20; } },
+  { icon: '🛡', name: '10% Dmg Reduction', desc: 'Block more incoming hits', apply: p => { p.damageReduction = Math.min(0.5, (p.damageReduction||0) + 0.10); } },
+  { icon: '⚡', name: 'Faster Attack', desc: '-0.08s swing cooldown', apply: () => { gs.attackSpeedLevel = Math.min(5, gs.attackSpeedLevel + 1); } },
+  { icon: '🗡', name: '+10 Attack Range', desc: 'Longer sword reach', apply: p => { p.attackRange = (p.attackRange||52) + 10; } },
+];
+
 function checkLevelUp() {
   const p = gs.player;
-  while (p.xp >= p.xpNext) {
+  if (p.xp >= p.xpNext && !gs.levelUpPending) {
     p.xp -= p.xpNext;
     p.level++;
     p.xpNext = Math.floor(p.xpNext * 1.4);
-    p.damage += 5;
-    p.maxHp += 15;
-    p.hp = Math.min(p.hp + 20, p.maxHp);
-    showAnnounce('LEVEL UP! Lv ' + p.level);
     playSound('levelUp');
+    spawnSparkles();
+    if (p.level === 5) showAnnounce('WHIRLWIND UNLOCKED!');
+    showLevelUpPanel();
   }
+}
+
+function showLevelUpPanel() {
+  gs.levelUpPending = true;
+  gs.state = 'levelup';
+  const choices = ALL_UPGRADES.slice().sort(() => Math.random() - 0.5).slice(0, 3);
+  const cont = document.getElementById('luCards');
+  cont.innerHTML = '';
+  choices.forEach(upg => {
+    const div = document.createElement('div');
+    div.className = 'luCard';
+    div.innerHTML = '<div class="lu-icon">' + upg.icon + '</div><div class="lu-name">' + upg.name + '</div><div class="lu-desc">' + upg.desc + '</div>';
+    div.onclick = () => pickUpgrade(upg);
+    cont.appendChild(div);
+  });
+  document.getElementById('levelUpOverlay').style.display = 'flex';
+}
+
+function pickUpgrade(upg) {
+  upg.apply(gs.player);
+  document.getElementById('levelUpOverlay').style.display = 'none';
+  gs.levelUpPending = false;
+  gs.state = 'playing';
+  showAnnounce('LEVEL UP! Lv ' + gs.player.level);
+  updateHUD();
+  checkLevelUp();
 }
 
 // ─── Orc AI ────────────────────────────────────────────────────────────────
@@ -1434,11 +1596,10 @@ function spawnOrc(forceBoss) {
   const wave = gs.wave;
   let type = 'grunt';
   const rand = Math.random();
-  // Progressive difficulty
-  if (wave >= 16 && rand < 0.18)      type = 'ranged';
+  if (wave >= 20 && rand < 0.10)      type = 'shaman';
+  else if (wave >= 16 && rand < 0.18) type = 'ranged';
   else if (wave >= 11 && rand < 0.28) type = 'armoured';
   else if (wave >= 6  && rand < 0.35) type = 'goblin';
-  // wave 1-5: grunts only
   if (wave <= 5) type = 'grunt';
 
   // Boss logic
@@ -1447,17 +1608,17 @@ function spawnOrc(forceBoss) {
     boss = true;
   }
 
-  const baseHp  = boss ? 300 : (type === 'armoured' ? 80 : (type === 'goblin' ? 25 : 40));
-  const baseSpd = boss ? 55  : (type === 'goblin' ? 210 : (type === 'armoured' ? 90 : 130));
+  const baseHp  = boss ? 300 : (type === 'shaman' ? 40 : (type === 'armoured' ? 80 : (type === 'goblin' ? 25 : 40)));
+  const baseSpd = boss ? 55  : (type === 'shaman' ? 70 : (type === 'goblin' ? 210 : (type === 'armoured' ? 90 : 130)));
   const hpScale = 1 + wave * 0.12;
 
   const spawnTargetY = y;
   const o = {
-    x, y: y - 100, r: boss ? 28 : (type === 'goblin' ? 10 : 13),
+    x, y: y - 100, r: boss ? 28 : (type === 'shaman' ? 14 : (type === 'goblin' ? 10 : 13)),
     hp: Math.round(baseHp * hpScale),
     maxHp: Math.round(baseHp * hpScale),
     speed: baseSpd,
-    damage: boss ? 22 : (type === 'armoured' ? 12 : (type === 'goblin' ? 7 : 10)),
+    damage: boss ? 22 : (type === 'shaman' ? 5 : (type === 'armoured' ? 12 : (type === 'goblin' ? 7 : 10))),
     attackCooldown: 1 + Math.random(),
     type, boss,
     hitFlash: 0,
@@ -1467,12 +1628,13 @@ function spawnOrc(forceBoss) {
     zigzagTimer: 0, zigzagOffset: 0,
     dropTimer: 0.4, dropTargetY: spawnTargetY, dropScale: 1.0,
     stunTimer: 0,
+    healTimer: type === 'shaman' ? 4.0 : 0,
   };
+  // Don't spawn inside visible screen
+  if (isOnScreen(x, y, 60)) return false;
   gs.orcs.push(o);
-  if (boss) {
-    playSound('bossSpawn');
-    showAnnounce('BOSS INCOMING!');
-  }
+  if (boss) { playSound('bossSpawn'); showAnnounce('BOSS INCOMING!'); }
+  return true;
 }
 
 function updateOrcs(dt) {
@@ -1535,7 +1697,27 @@ function updateOrcs(dt) {
     }
 
     if (o.kbTimer <= 0 && o.dropTimer <= 0 && o.stunTimer <= 0) {
-      if (o.type === 'ranged') {
+      if (o.type === 'shaman') {
+        const dxS = p.x - o.x, dyS = p.y - o.y;
+        const dS = Math.sqrt(dxS*dxS + dyS*dyS);
+        if (dS < 150 && dS > 0) { o.x -= (dxS/dS)*o.speed*1.4*dt; o.y -= (dyS/dS)*o.speed*1.4*dt; }
+        else if (dS > 280 && dS > 0) { o.x += (dxS/dS)*o.speed*0.6*dt; o.y += (dyS/dS)*o.speed*0.6*dt; }
+        if (o.healTimer !== undefined) o.healTimer = Math.max(0, o.healTimer - dt);
+        if (o.healTimer === 0) {
+          o.healTimer = 4.0;
+          let hTarget = null, bestMiss = 0;
+          for (const ot of gs.orcs) {
+            if (ot === o || ot.killed) continue;
+            const miss = ot.maxHp - ot.hp;
+            if (miss > bestMiss && dist(o, ot) < 200) { bestMiss = miss; hTarget = ot; }
+          }
+          if (hTarget) {
+            hTarget.hp = Math.min(hTarget.maxHp, hTarget.hp + 25);
+            spawnParticles(hTarget.x, hTarget.y, '#44ff88', 10);
+            spawnDmgNum(hTarget.x, hTarget.y - 20, '+25', '#44ff88');
+          }
+        }
+      } else if (o.type === 'ranged') {
         // Ranged: maintain distance 180-220
         const dx = target.x - o.x, dy = target.y - o.y;
         const d = Math.sqrt(dx*dx + dy*dy);
@@ -1601,8 +1783,8 @@ function updateOrcs(dt) {
 
   // Remove dead orcs
   for (let i = gs.orcs.length - 1; i >= 0; i--) {
-    if (gs.orcs[i].hp <= 0) {
-      killOrc(gs.orcs[i]);
+    if (gs.orcs[i].hp <= 0 || gs.orcs[i].killed) {
+      if (!gs.orcs[i].killed) killOrc(gs.orcs[i]);
       gs.orcs.splice(i, 1);
     }
   }
@@ -1660,11 +1842,12 @@ function damagePlayer(dmg) {
     updateShieldIcon();
     return;
   }
-  p.hp -= dmg;
+  const rdmg = Math.max(1, Math.round(dmg * (1 - (p.damageReduction || 0))));
+  p.hp -= rdmg;
   p.invincible = 0.9;
   triggerShake(6, 0.4);
   spawnParticles(p.x, p.y, '#ff4444', 8);
-  spawnDmgNum(p.x, p.y - p.r - 10, '-' + dmg, '#f44');
+  spawnDmgNum(p.x, p.y - p.r - 10, '-' + rdmg, '#f44');
   playSound('playerHurt');
   if (p.hp <= 0) {
     p.hp = 0;
@@ -1709,10 +1892,7 @@ function updateSoldiers(dt) {
       nearest.hitFlash = 0.1;
       s.attackCooldown = 0.9;
       spawnParticles(nearest.x, nearest.y, '#44cc44', 3);
-      if (nearest.hp <= 0) {
-        killOrc(nearest);
-        nearest.hp = 0; // will be cleaned in updateOrcs
-      }
+      if (nearest.hp <= 0 && !nearest.killed) { nearest.killed = true; killOrc(nearest); }
     }
 
     s.x = Math.max(WALL + s.r, Math.min(WW - WALL - s.r, s.x));
@@ -1737,6 +1917,7 @@ function startWave() {
   gs.wave++;
   document.getElementById('waveVal').textContent = gs.wave;
   waveKills = 0; waveGold = 0;
+  gs.waveStartTime = gs.playTime || 0;
   gs.waveStartTime = Date.now();
 
   // Auto-heal 15 HP free reward (not wave 1)
@@ -1781,8 +1962,7 @@ function updateWave(dt) {
   spawnTimer -= dt;
   if (spawnTimer <= 0 && orcsSpawned < orcsThisWave) {
     if (gs.orcs.length < 40) {
-      spawnOrc(false);
-      orcsSpawned++;
+      if (spawnOrc(false)) orcsSpawned++;
     }
     spawnTimer = 0.15;
   }
@@ -1874,6 +2054,32 @@ function updateHUD() {
   document.getElementById('levelLabel').textContent = 'Lv ' + p.level;
   const bombStr = gs.bombCount > 0 ? ' 💣' + gs.bombCount : '';
   document.getElementById('goldDisplay').textContent = '\u2605 ' + gs.gold + bombStr;
+  const buffBar = document.getElementById('buffBar');
+  if (buffBar) {
+    buffBar.innerHTML = '';
+    for (const b of (gs.timedBuffs || [])) {
+      const pill = document.createElement('span');
+      pill.className = 'buffPill' + (b.remaining < 3 ? ' fading' : '');
+      pill.textContent = b.icon + ' ' + Math.ceil(b.remaining) + 's';
+      buffBar.appendChild(pill);
+    }
+    if (gs.player && gs.player.level >= 5) {
+      const cd = gs.whirlwindCooldown || 0;
+      const wwp = document.createElement('span');
+      wwp.className = 'buffPill';
+      wwp.style.borderColor = cd > 0 ? '#3355aa' : '#66aaff';
+      wwp.style.color = cd > 0 ? '#6688cc' : '#aaddff';
+      wwp.textContent = '🌀 ' + (cd > 0 ? Math.ceil(cd) + 's' : 'READY');
+      buffBar.appendChild(wwp);
+    }
+  }
+  const wwBtn = document.getElementById('whirlwindBtnTouch');
+  if (wwBtn && gs.player) {
+    if (gs.player.level >= 5) {
+      wwBtn.style.display = 'flex';
+      wwBtn.className = (gs.whirlwindCooldown||0) > 0 ? 'locked' : '';
+    }
+  }
 }
 
 // ─── Shop ──────────────────────────────────────────────────────────────────
@@ -1889,8 +2095,11 @@ function openShop() {
   const soldierCost = 80 + gs.soldiers.length * 45;
   const bombOwned = gs.bombCount || 0;
   const items = [
-    { name: 'Heal HP (+60)', cost: 30, key: 'heal',
-      disabled: p.hp >= p.maxHp, disabledReason: 'Full HP' },
+    { name: '⛄ Heal HP (+60)', cost: 30, key: 'heal', disabled: p.hp >= p.maxHp, disabledReason: 'Full HP' },
+    { name: '⚕ Full Heal', cost: 80, key: 'fullheal', disabled: p.hp >= p.maxHp, disabledReason: 'Full HP' },
+    { name: '🛡 Iron Shield (+15% DR)', cost: 90, key: 'ironshield', disabled: (p.damageReduction||0) >= 0.5, disabledReason: 'Max 50%' },
+    { name: '🌀 Haste Potion (+30 spd 20s)', cost: 65, key: 'haste', disabled: false },
+    { name: '💣 Bomb (area 40 dmg)', cost: 120, key: 'newbomb', disabled: false },
     { name: 'Max HP +25', cost: 50, key: 'maxhp', disabled: false },
     { name: 'Damage +12', cost: 60, key: 'damage', disabled: false },
     { name: 'Speed +25', cost: 55, key: 'speed', disabled: false },
@@ -1908,6 +2117,10 @@ function openShop() {
 
   const descs = {
     heal: 'Restore 60 HP instantly',
+    fullheal: 'Restore to full HP',
+    ironshield: 'Permanently cut incoming damage by 15%',
+    haste: '+30 speed for 20 seconds',
+    newbomb: 'Deals 40 damage to all on-screen orcs',
     maxhp: 'Increase maximum health permanently',
     damage: 'Your sword strikes harder',
     speed: 'Move faster across the battlefield',
@@ -1963,6 +2176,24 @@ function buyItem(key, cost) {
   gs.gold -= cost;
   const p = gs.player;
   if (key === 'heal') { p.hp = Math.min(p.maxHp, p.hp + 60); }
+  else if (key === 'fullheal') { p.hp = p.maxHp; }
+  else if (key === 'ironshield') { p.damageReduction = Math.min(0.5, (p.damageReduction||0) + 0.15); }
+  else if (key === 'newbomb') {
+    for (let bi = gs.orcs.length-1; bi >= 0; bi--) {
+      const o2 = gs.orcs[bi];
+      if (!o2.killed && isOnScreen(o2.x, o2.y, 0)) {
+        o2.hp -= 40; spawnParticles(o2.x, o2.y, '#ff6600', 8);
+        spawnDmgNum(o2.x, o2.y - 20, '40', '#ff8800');
+        if (o2.hp <= 0 && !o2.killed) { o2.killed = true; killOrc(o2); }
+      }
+    }
+    gs.screenFlash = 0.3; triggerShake(8, 0.5); showAnnounce('BOOM!'); playSound('bomb');
+  }
+  else if (key === 'haste') {
+    gs.timedBuffs = (gs.timedBuffs||[]).filter(b => b.key !== 'haste');
+    p.speed += 30;
+    gs.timedBuffs.push({ key: 'haste', icon: '🌀', label: 'Haste', remaining: 20, total: 20 });
+  }
   else if (key === 'maxhp') { p.maxHp += 25; p.hp += 15; }
   else if (key === 'damage') { p.damage += 12; }
   else if (key === 'speed') { p.speed += 25; }
@@ -2101,13 +2332,7 @@ function gameOver() {
   const newHigh = checkAndSaveHighScore();
   const hs = loadHighScores();
   const ov = document.getElementById('overlay');
-  ov.innerHTML = `
-    <h1 style="color:#f44">GAME OVER</h1>
-    <div class="subtitle">Wave ${gs.wave} | Score: ${gs.score}</div>
-    ${newHigh ? '<div style="color:#ffd700;font-size:18px;text-shadow:0 0 12px #f80">★ NEW HIGH SCORE! ★</div>' : ''}
-    <div class="controls-hint">You fought bravely... but the orcs overwhelmed you.<br>Best Score: ${hs.highScore} &nbsp;|&nbsp; Best Wave: ${hs.bestWave}</div>
-    <button onclick="startGame()">&#9658; TRY AGAIN</button>
-  `;
+  ov.innerHTML = `<h1 style="color:#f44">GAME OVER</h1><div class="subtitle">Wave ${gs.wave} | Score: ${gs.score} | Orcs: ${gs.totalOrcsKilled||0}</div>${newHigh ? '<div style="color:#ffd700;font-size:18px;text-shadow:0 0 12px #f80">★ NEW HIGH SCORE! ★</div>' : ''}<div class="controls-hint">You fought bravely...<br><span style="color:#888;font-size:12px">Best: Wave ${hs.bestWave||0} | High Score: ${hs.highScore||0}</span></div><button onclick="startGame()">&#9658; TRY AGAIN</button>`;
   ov.style.display = 'flex';
 }
 
@@ -2116,12 +2341,7 @@ function winGame() {
   checkAndSaveHighScore();
   const hs = loadHighScores();
   const ov = document.getElementById('overlay');
-  ov.innerHTML = `
-    <h1 style="color:#ffd700">VICTORY!</h1>
-    <div class="subtitle">You survived all 50 waves!</div>
-    <div class="controls-hint">Final Score: ${gs.score}<br>Best Score: ${hs.highScore} &nbsp;|&nbsp; Best Wave: ${hs.bestWave}<br>A true Knight Orc Assault champion!</div>
-    <button onclick="startGame()">&#9658; PLAY AGAIN</button>
-  `;
+  ov.innerHTML = `<h1 style="color:#ffd700">VICTORY!</h1><div class="subtitle">All 50 waves complete!</div><div class="controls-hint">Score: ${gs.score} | Orcs: ${gs.totalOrcsKilled||0}<br><span style="color:#888;font-size:12px">High Score: ${hs.highScore||0}</span><br>A true champion!</div><button onclick="startGame()">&#9658; PLAY AGAIN</button>`;
   ov.style.display = 'flex';
 }
 
@@ -2150,6 +2370,7 @@ function update(dt) {
   }
 
   if (gs.state === 'paused') return;
+  if (gs.state === 'levelup') { updateCamera(gs.player, dt); updateParticles(dt); updateSparkles(dt); return; }
   if (gs.state !== 'playing') return;
   const p = gs.player;
   const adt = dt * gs.dtMult;
@@ -2174,6 +2395,16 @@ function update(dt) {
   p.attackCooldown = Math.max(0, p.attackCooldown - adt);
   p.attackAnim = Math.max(0, p.attackAnim - adt * 4);
   p.invincible = Math.max(0, p.invincible - adt);
+  gs.whirlwindCooldown = Math.max(0, (gs.whirlwindCooldown||0) - adt);
+  gs.whirlwindTimer = Math.max(0, (gs.whirlwindTimer||0) - adt);
+  gs.playTime = (gs.playTime||0) + dt;
+  if (keys['KeyR'] && !keys['_rHeld']) { keys['_rHeld'] = true; tryWhirlwind(); }
+  if (!keys['KeyR']) keys['_rHeld'] = false;
+  for (let ti = (gs.timedBuffs||[]).length - 1; ti >= 0; ti--) {
+    const tb = gs.timedBuffs[ti];
+    tb.remaining -= adt;
+    if (tb.remaining <= 0) { if (tb.key === 'haste') gs.player.speed -= 30; gs.timedBuffs.splice(ti, 1); }
+  }
 
   // Combo timer countdown
   if (gs.comboTimer > 0) {
@@ -2200,8 +2431,7 @@ function draw() {
   ctx.clearRect(0, 0, VW, VH);
 
   if (gs.state === 'menu' || gs.state === 'gameover' || gs.state === 'win') {
-    ctx.fillStyle = '#2a2015';
-    ctx.fillRect(0, 0, VW, VH);
+    drawMenuBackground();
     return;
   }
 
@@ -2247,6 +2477,23 @@ function draw() {
     ctx.globalAlpha = 1;
   }
 
+  // Whirlwind visual ring
+  if ((gs.whirlwindTimer||0) > 0) {
+    const wt = gs.whirlwindTimer, pw = gs.player;
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, wt * 2);
+    ctx.strokeStyle = '#88aaff'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.arc(wx(pw.x), wy(pw.y), 100, 0, Math.PI*2); ctx.stroke();
+    ctx.globalAlpha = Math.min(1, wt * 1.5);
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(wx(pw.x), wy(pw.y), 80, 0, Math.PI*2); ctx.stroke();
+    const ta = performance.now() / 80;
+    ctx.strokeStyle = '#aaccff'; ctx.lineWidth = 3;
+    ctx.globalAlpha = Math.min(1, wt * 2);
+    ctx.beginPath(); ctx.arc(wx(pw.x), wy(pw.y), 90, ta, ta + Math.PI * 1.4); ctx.stroke();
+    ctx.restore();
+  }
+
   ctx.restore();
 
   // Minimap and kill feed (outside zoom transform)
@@ -2277,6 +2524,47 @@ function updateSoldierPortraits() {
   }
 }
 
+
+// ─── Menu Background ─────────────────────────────────────────────────────────
+const menuPtcls = [];
+for (let mi = 0; mi < 55; mi++) menuPtcls.push({ x: Math.random()*VW, y: Math.random()*VH, vx: (Math.random()-0.5)*20, vy: -6-Math.random()*16, r: 1+Math.random()*2.5, a: 0.15+Math.random()*0.4 });
+let menuBobT = 0;
+
+function drawMenuBackground() {
+  ctx.fillStyle = '#0e0c18';
+  ctx.fillRect(0, 0, VW, VH);
+  menuBobT += 0.016;
+  for (const mp of menuPtcls) {
+    mp.x += mp.vx * 0.016; mp.y += mp.vy * 0.016;
+    if (mp.y < -10) { mp.y = VH+10; mp.x = Math.random()*VW; }
+    if (mp.x < -10) mp.x = VW+10; if (mp.x > VW+10) mp.x = -10;
+    ctx.globalAlpha = mp.a;
+    ctx.fillStyle = '#ffd700';
+    ctx.beginPath(); ctx.arc(mp.x, mp.y, mp.r, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  if (gs.state === 'menu') {
+    // Knight preview
+    const bob = Math.sin(menuBobT * 2) * 4;
+    const kx = VW * 0.75, ky = VH * 0.44 + bob;
+    ctx.save(); ctx.translate(kx, ky); ctx.scale(1.5, 1.5);
+    ctx.fillStyle = '#cc2020'; ctx.beginPath(); ctx.ellipse(-2, 4, 9, 12, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#8898a8'; ctx.fillRect(-10, -1, 20, 22);
+    ctx.fillStyle = '#b0bcc8'; ctx.beginPath(); ctx.arc(0, -10, 14, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#444'; ctx.fillRect(-7, -8, 14, 5);
+    ctx.fillStyle = '#222'; ctx.fillRect(-5, -14, 10, 6);
+    ctx.fillStyle = '#88aacc'; ctx.fillRect(-4,-13,3,4); ctx.fillRect(2,-13,3,4);
+    ctx.fillStyle = '#dd1010'; ctx.fillRect(-1, -25, 3, 14);
+    ctx.rotate(Math.sin(menuBobT * 1.5) * 0.2);
+    ctx.fillStyle = '#d0d8e0'; ctx.fillRect(7, -2, 30, 4);
+    ctx.fillStyle = '#8a6020'; ctx.fillRect(4, -4, 6, 8);
+    ctx.restore();
+    // high score
+    const hs = getHighScores();
+    const hsel = document.getElementById('menuHighScore');
+    if (hsel && hs.highScore) hsel.textContent = 'Best: Wave ' + (hs.mostWaves||0) + ' | High Score: ' + hs.highScore;
+  }
+}
 // ─── Game Loop ─────────────────────────────────────────────────────────────
 function gameLoop(ts) {
   let dt = (ts - lastTime) / 1000;
